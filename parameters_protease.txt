@@ -1,0 +1,20 @@
+*** Treatment Details ***
+Experiment Name = neutrophil_serine_protease
+Experiments = cathepsin G, elastase, hPR3, no protease
+Control Name = FLAG
+
+Treatments = 15
+N-plicates (duplicate/triplicate/etc.) = 3
+Treatment Names = C, E, H, V, N
+All Treatment Names = C1, C2, C3, E1, E2, E3, H1, H2, H3, V1, V2, V3, N1, N2, N3
+
+*** Mutagenesis Sequencing ***
+First Position = 51
+Last Position = 65
+N-mer = 5
+Row Sum Filter = 6
+
+***
+Files in Gzip (no/yes) = no
+Single/Parallel Read = single
+File Names = C1-UDP0001_S1_L001_R1_001.fastq, C2-UDP0002_S2_L001_R1_001.fastq, C3-UDP0003_S3_L001_R1_001.fastq, E1-UDP0004_S4_L001_R1_001.fastq, E2-UDP0005_S5_L001_R1_001.fastq, E3-UDP0006_S6_L001_R1_001.fastq, H1-UDP0007_S7_L001_R1_001.fastq, H2-UDP0008_S8_L001_R1_001.fastq, H3-UDP0009_S9_L001_R1_001.fastq, V1-UDP0013_S13_L001_R1_001.fastq, V2-UDP0014_S14_L001_R1_001.fastq, V3-UDP0015_S15_L001_R1_001.fastq, N1-UDP0010_S10_L001_R1_001.fastq, N2-UDP0011_S11_L001_R1_001.fastq, N3-UDP0012_S12_L001_R1_001.fastq

@@ -1,0 +1,21 @@
+*** Treatment Details ***
+Experiment Name = neutrophil_mixture
+Experiments = no inhibitor, AEBSF, EDTA, AEBSF+EDTA
+Control Name = FLAG
+
+Treatments = 15
+N-plicates (duplicate/triplicate/etc.) = 3
+Treatment Names = NI, A, ED, AE, G
+All Treatment Names = NI1, NI2, NI3, A1, A2, A3, ED1, ED2, ED3, AE1, AE2, AE3, G1, G2, G3
+
+*** Mutagenesis Sequencing ***
+First Position = 51
+Last Position = 65
+N-mer = 5
+Row Sum Filter = 6
+
+***
+Files in Gzip (no/yes) = no
+Single/Parallel Read = single
+File Names = Pool-2-N1_S16_L001_R1_001.fastq, Pool-2-N2_S17_L001_R1_001.fastq, Pool-2-N3_S18_L001_R1_001.fastq, Pool-2-A1_S19_L001_R1_001.fastq, Pool-2-A2_S20_L001_R1_001.fastq, Pool-2-A3_S21_L001_R1_001.fastq, Pool-2-E1_S22_L001_R1_001.fastq, Pool-2-E2_S23_L001_R1_001.fastq, Pool-2-E3_S24_L001_R1_001.fastq, Pool-2-AE1_S25_L001_R1_001.fastq, Pool-2-AE2_S26_L001_R1_001.fastq, Pool-2-AE3_S27_L001_R1_001.fastq, Pool-2-G1_S13_L001_R1_001.fastq, Pool-2-G2_S14_L001_R1_001.fastq, Pool-2-G3_S15_L001_R1_001.fastq		
+
