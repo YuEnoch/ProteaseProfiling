@@ -110,7 +110,7 @@ The experiments were done in triplicates. The default parameters in parameters.t
 
 All subsequent analyses in the manuscript were conducted in R. All supplemental datasets for the R script were uploaded to the GEO database.
 
-List of Files for running the R script: (place in same folder with R files, located in GEO)
+List of Files for running the R script: (place in same folder with R files, located in GEO or GitHub)
 * neutrophil_serine_protease_data.csv #counts data of peptides in cleaved/released phages
 * neutrophil_mixture_data.csv
 * neutrophil_unfiltered_protease&mixture_data.csv
@@ -143,7 +143,7 @@ List of Files for running Icelogo (sourced from Preliminary Analysis.Rmd) #pepti
 
 The complete high-throughput sequencing reads of cleaved/release phage DNA from Nextseq2000 were uploaded onto SRA (Accession ID: PRJNA1141700). Filtered and unfiltered counts tables of cleaved peptides were uploaded onto GEO.
 
-Other data files uploaded to GEO:
+Other data files uploaded to GitHub:
 * Peptides determined to be significantly cleaved (unaligned and aligned)
 * Positional weight matrices of each condition (unaligned and aligned)
 * Synthetically aligned peptides
