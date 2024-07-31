@@ -30,6 +30,7 @@ Please specify experiment details/names in parameter.txt, which would include al
 * [Raw FastQ File Processing - Trimming, Filtering, Translation](#raw-fastq-file-processing---trimming-filtering-translation)
 * [Test Files](#test-files)
 * [R Markdown Files](#r-markdown-files)
+* [Supplementary Data Files](#supplementary-data-files)
 
 ### Set-Up Sequencing Platform
 To set up this program, place all the files in the same folder (as organized by default). All folder directories would be set-up automatically, with the program ready to run on the test set. The parameters.txt contains all the editable parameters available. Please edit each while maintaining the same formatting and spacing. 
