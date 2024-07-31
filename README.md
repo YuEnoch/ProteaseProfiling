@@ -29,6 +29,7 @@ Please specify experiment details/names in parameter.txt, which would include al
 * [Set-Up Sequencing Platform](#set-up-sequencing-platform)
 * [Raw FastQ File Processing - Trimming, Filtering, Translation](#raw-fastq-file-processing---trimming-filtering-translation)
 * [Test Files](#test-files)
+* [R Markdown Files](#r-markdown-files)
 
 ### Set-Up Sequencing Platform
 To set up this program, place all the files in the same folder (as organized by default). All folder directories would be set-up automatically, with the program ready to run on the test set. The parameters.txt contains all the editable parameters available. Please edit each while maintaining the same formatting and spacing. 
@@ -103,6 +104,40 @@ Activated Supernatant Mixtures:
 5. FLAG Peptide Elution: Pool-2-G1_S13_L001_R1_001.fastq, Pool-2-G2_S14_L001_R1_001.fastq, Pool-2-G3_S15_L001_R1_001.fastq	
 
 The experiments were done in triplicates. The default parameters in parameters.txt were based off this experiment. Parameters for the proteases screen were denoted in 'parameters_protease.txt' and the mixture screen were denoted in 'parameters_mixture.txt'.
+
+### R Markdown Files
+
+All subsequent analyses in the manuscript were conducted in R. All supplemental datasets for the R script were uploaded to the GEO database.
+
+List of Files for running the R script: (place in same folder with R files)
+* neutrophil_serine_protease_data.csv
+* neutrophil_mixture_data.csv
+* neutrophil_unfiltered_protease&mixture_data.csv
+
+* control_frequency_mixture.txt (sourced from Preliminary Analysis.Rmd)
+* control_frequency_protease.txt
+* control_frequency_combined.txt
+
+* cathepsin G_MEROPs.xlsx (sourced from MEROPs substrate lists online)
+* elastase_MEROPs.xlsx
+* hPR3_MEROPs.xlsx
+
+* aligned_sig_peptides_cathepsin G.fasta (generated from code in R file)
+* aligned_sig_peptides_elastase.fasta
+* aligned_sig_peptides_no protease.fasta
+* aligned_sig_peptides_hpr3.fasta
+
+* aligned_sig_peptides_no inhibitor.fasta
+* aligned_sig_peptides_AEBSF.fasta
+* aligned_sig_peptides_EDTA.fasta
+* aligned_sig_peptides_AEBSF+EDTA.fasta
+
+List of FIles for running Icelogo (sourced from Preliminary Analysis.Rmd)
+* control_frequency_protease.fasta
+* control_frequency_mixture.fasta
+* control_frequency_protease_9mer.fasta
+* control_frequency_mixture_9mer.fasta
+* control_frequency_combined.fasta
 
 # References:
 
