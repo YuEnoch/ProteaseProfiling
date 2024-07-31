@@ -16,7 +16,6 @@ import os
 import subprocess
 from subprocess import call
 
-print("Pipeline in Progress...")
 
 def getDetails(str, type):
     str = str.strip().split(' = ')
@@ -29,8 +28,18 @@ def getDetails(str, type):
         str = str.split(', ')
         return str
 
-parameterFile = "parameters_protease.txt" #either parameters_protease.txt or parameters_mixture.txt
-parameterFile = "parameters_mixture.txt"
+print("Starting Pipeline for Sequencing Data: \n\nThis file would filter, trim, and translate the sequence reads of cleaved phages with randomized 5-mers.\nSubsequent figures and processing would be done in R, as denoted in the R markdown files.\nComplete supplementary data of sequences and counts can be located in SRA and GEO databases.")
+inp = int(input("\nWould the processing take place for Proteases (1) or Mixtures (2): "))
+
+if inp == 1:
+    parameterFile = "parameters_protease.txt" #either parameters_protease.txt or parameters_mixture.txt
+elif inp == 2:
+    parameterFile = "parameters_mixture.txt"
+else:
+    parameterFile = "parameters.txt"
+
+print("Pipeline in Progress...")
+
 input = open(parameterFile,'r')
 
 input.readline()
