@@ -109,35 +109,45 @@ The experiments were done in triplicates. The default parameters in parameters.t
 
 All subsequent analyses in the manuscript were conducted in R. All supplemental datasets for the R script were uploaded to the GEO database.
 
-List of Files for running the R script: (place in same folder with R files)
-* neutrophil_serine_protease_data.csv
+List of Files for running the R script: (place in same folder with R files, located in GEO)
+* neutrophil_serine_protease_data.csv #counts data of peptides in cleaved/released phages
 * neutrophil_mixture_data.csv
 * neutrophil_unfiltered_protease&mixture_data.csv
 
-* control_frequency_mixture.txt (sourced from Preliminary Analysis.Rmd)
+* control_frequency_mixture.txt (sourced from Preliminary Analysis.Rmd) #frequency of amino acids in the unselected phage library
 * control_frequency_protease.txt
 * control_frequency_combined.txt
 
-* cathepsin G_MEROPs.xlsx (sourced from MEROPs substrate lists online)
+* cathepsin G_MEROPs.xlsx (sourced from MEROPs substrate lists online) #8-mer substrates reported on MEROPs for each protease
 * elastase_MEROPs.xlsx
 * hPR3_MEROPs.xlsx
 
-* aligned_sig_peptides_cathepsin G.fasta (generated from code in R file)
+* aligned_sig_peptides_cathepsin G.fasta (generated from code in R file) #aligned peptides but prior to centering at P1
 * aligned_sig_peptides_elastase.fasta
 * aligned_sig_peptides_no protease.fasta
 * aligned_sig_peptides_hpr3.fasta
-
 * aligned_sig_peptides_no inhibitor.fasta
 * aligned_sig_peptides_AEBSF.fasta
 * aligned_sig_peptides_EDTA.fasta
 * aligned_sig_peptides_AEBSF+EDTA.fasta
 
-List of FIles for running Icelogo (sourced from Preliminary Analysis.Rmd)
+List of Files for running Icelogo (sourced from Preliminary Analysis.Rmd) #peptide lists that capture the AA frequency in the unselected phage library
 * control_frequency_protease.fasta
 * control_frequency_mixture.fasta
 * control_frequency_protease_9mer.fasta
 * control_frequency_mixture_9mer.fasta
 * control_frequency_combined.fasta
+
+### Supplementary Data Files
+
+The complete high-throughput sequencing reads of cleaved/release phage DNA from Nextseq2000 were uploaded onto SRA (Accession ID: PRJNA1141700). Filtered and unfiltered counts tables of cleaved peptides were uploaded onto GEO.
+
+Other data files uploaded to GEO:
+* Peptides determined to be significantly cleaved (unaligned and aligned)
+* Positional weight matrices of each condition (unaligned and aligned)
+* Synthetically aligned peptides
+* Frequencies the Unselected Phage Library
+* MEROPs substrates of the 3 neutrophil serine proteases
 
 # References:
 
@@ -147,9 +157,22 @@ The code adapts work from:
 
 **mod575.py**: written by Dr. Kart Tomberg
 
-**PCA Analysis**: from Dr. Matt Holding
+**Substrate Analysis using Alphafold2**: from Dr. Matt Holding
+
+**Blood Protease Dataset**: Kretz CA, Tomberg K, Van Esbroeck A, Yee A, Ginsburg D. High throughput protease profiling comprehensively defines active site specificity for thrombin and ADAMTS13. Sci Rep. 2018 Feb 12;8(1):2788. 
 
 **DESEQ2**: Love MI, Huber W, Anders S (2014). “Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2.” Genome Biology, 15, 550. https://doi.org/10.1186/s13059-014-0550-8.
 
 **MClust**: Scrucca L, Fop M, Murphy TB, Raftery AE (2016). “mclust 5: clustering, classification and density estimation using Gaussian finite mixture models.” The R Journal, 8(1), 289–317. https://doi.org/10.32614/RJ-2016-021.
-# ProteaseProfiling
+
+**CibersortX**: Newman AM, Steen CB, Liu CL, Gentles AJ, Chaudhuri AA, Scherer F, et al. Determining cell type abundance and expression from bulk tissues with digital cytometry. Nat Biotechnol. 2019 Jul;37(7):773–82. 
+
+**EPIC**: Racle J, Gfeller D. EPIC: A Tool to Estimate the Proportions of Different Cell Types from Bulk Gene Expression Data. Methods Mol Biol. 2020;2120:233–48. 
+
+**DECIPHER**: Wright ES. DECIPHER: harnessing local sequence context to improve protein multiple sequence alignment. BMC Bioinformatics. 2015 Oct 6;16(1):322. 
+
+
+Other Packages Used: dplyr, tidyr, RColorBrewer, reshape, factoextra, stringr, openxlsx, stats, multcomp, Hmisc, gridExtra, tidyverse, ggplot2, ggseqlogo, ggpubr, ggbeeswarm, ggVennDiagram, ggVenn, pheatmap, PoiClaClu, BiocManager, S4Arrays, DelayedArray, plotly, plot3D, dbscan, forcats, umap, immunedeconv, plotly, clusterSim
+
+
+
