@@ -115,20 +115,17 @@ List of Files for running the R script: (place in same folder with R files, loca
 * neutrophil_mixture_data.csv
 * neutrophil_unfiltered_protease&mixture_data.csv
 
-
-
+#
 * control_frequency_mixture.txt (sourced from Preliminary Analysis.Rmd) #frequency of amino acids in the unselected phage library
 * control_frequency_protease.txt
 * control_frequency_combined.txt
 
-
-
+#
 * cathepsin G_MEROPs.xlsx (sourced from MEROPs substrate lists online) #8-mer substrates reported on MEROPs for each protease
 * elastase_MEROPs.xlsx
 * hPR3_MEROPs.xlsx
 
-
-
+#
 * aligned_sig_peptides_cathepsin G.fasta (generated from code in R file) #aligned peptides but prior to centering at P1
 * aligned_sig_peptides_elastase.fasta
 * aligned_sig_peptides_no protease.fasta
