@@ -79,9 +79,9 @@ call(["python3", "ObservedExpectedPlot.py", name, n_mer])
 ```
 <p align="middle">
    <img src="https://raw.githubusercontent.com/YuEnoch/NNK-NeutrophilProteases/main/ReferenceImages/aa_nucleotide_frequencies.png" width="400" />
-      <img src="https://raw.githubusercontent.com/YuEnoch/NNK-NeutrophilProteases/main/ReferenceImages/aminoacidcount.png" width="200" />
+      <img src="https://raw.githubusercontent.com/YuEnoch/NNK-NeutrophilProteases/main/ReferenceImages/aminoacidcount.png" width="300" />
 
-   <img src="https://raw.githubusercontent.com/YuEnoch/NNK-NeutrophilProteases/main/ReferenceImages/aminoacidfrequency.png" width="200" />
+   <img src="https://raw.githubusercontent.com/YuEnoch/NNK-NeutrophilProteases/main/ReferenceImages/aminoacidfrequency.png" width="300" />
 </p>  
 
 
