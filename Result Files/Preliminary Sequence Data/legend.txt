@@ -1,0 +1,13 @@
+Protease Screens of Cleaved/Released Phage:
+C1-3: cathepsin G
+E1-3: neutrophil elastase
+H1-3: human proteinase 3
+V1-3: condition with no protease
+N1-3: condition with FLAG peptide elution
+
+Supernatant Screens of CLeaved/Released Phage:
+NI1-3: activated neutrophil supernatant without inhibitors
+A1-3: activated neutrophil supernatant with AEBSF
+ED1-3: activated neutrophil supernatant with EDTA
+AE1-3: activated neutrophil supernatant with AEBSF and EDTA
+G1-3: condition with FLAG peptide elution
