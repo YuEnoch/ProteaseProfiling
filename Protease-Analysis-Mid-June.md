@@ -26,7 +26,7 @@ filtered, and translated into a counts table of cleaved peptides.
 
 <div class="figure" style="text-align: center">
 
-<img src="figures/phagelibraryprep.png" alt="Phage library generation and experimental design" width="40%" height="20%" />
+<img src="Figures/phagelibraryprep.png" alt="Phage library generation and experimental design" width="40%" height="20%" />
 <p class="caption">
 Phage library generation and experimental design
 </p>
@@ -187,7 +187,7 @@ pheatmap(samplePoisDistMatrix, clustering_distance_rows = poisd_mixture$dd, clus
 
 <div class="figure" style="text-align: center">
 
-<img src="Poisson_protease.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Poisson_Mixture.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
+<img src="Figures/Poisson_protease.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/Poisson_Mixture.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
 <p class="caption">
 Poisson Distance Plots for Proteases (Left) and Mixtures (Right)
 </p>
@@ -208,7 +208,7 @@ fviz_pca_ind(pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC
 
 <div class="figure" style="text-align: center">
 
-<img src="PCA_protease.png" alt="PCA Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="PCA_mixture.png" alt="PCA Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
+<img src="Figures/PCA_protease.png" alt="PCA Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/PCA_mixture.png" alt="PCA Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
 <p class="caption">
 PCA Plots for Proteases (Left) and Mixtures (Right)
 </p>
@@ -307,7 +307,7 @@ for (i in 1:length(mixtures)){
 
 <div class="figure" style="text-align: center">
 
-<img src="csgmaplot.png" alt="Example of a MA plot for cathepsin G" width="40%" height="20%" />
+<img src="Figures/csgmaplot.png" alt="Example of a MA plot for cathepsin G" width="40%" height="20%" />
 <p class="caption">
 Example of a MA plot for cathepsin G
 </p>
@@ -326,13 +326,13 @@ combined_list <- append(proteases_list, mixtures_list)
 ggseqlogo(combined_list)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-10-1.png" width="60%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-10-1.png" width="60%" />
 
 ``` r
 ggseqlogo(combined_list, method = 'prob')
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-10-2.png" width="60%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-10-2.png" width="60%" />
 
 ## Peptide Space Comparisons
 
@@ -340,7 +340,7 @@ Venn diagrams using ggVennDiagram were used to determine the overlap in
 cleaved peptides between proteases, mixtures, and other conditions, as
 well as areas of distinct activity.
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-1.png" width="49%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-2.png" width="49%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-3.png" width="49%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-4.png" width="49%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-5.png" width="49%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-1.png" width="49%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-2.png" width="49%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-3.png" width="49%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-4.png" width="49%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-11-5.png" width="49%" />
 
 Functions to Convert Peptides between TXT and Fasta files
 
@@ -501,13 +501,13 @@ synthetic_unaligned_list <- list(`cathepsin G` = unalignedList$`cathepsin G`,ela
 ggseqlogo(synthetic_aligned_list) #aligned peptides
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-18-1.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-18-1.png" width="30%" />
 
 ``` r
 ggseqlogo(synthetic_unaligned_list) #unaligned peptides
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-18-2.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-18-2.png" width="30%" />
 
 ## Icelogos for Peptides with Unsupervised Alignment, referencing the background unselected library
 
@@ -532,7 +532,7 @@ both Screens: ‘control_frequency_combined.fasta’
 
 <div class="figure" style="text-align: center">
 
-<img src="cathepsinG_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="elastase_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="hPR3_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="no protease_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="noinhibitor_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="AEBSF_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="EDTA_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="AEBSFEDTA_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
+<img src="Figures/cathepsinG_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/elastase_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/hPR3_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/no protease_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/noinhibitor_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/AEBSF_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/EDTA_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/AEBSFEDTA_icelogo-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
 <p class="caption">
 PCA Plots for proteases (Left) and Mixtures (Right)
 </p>
@@ -588,7 +588,7 @@ txt_to_fasta(paste0("unaligned_synthetic_9mer_FLAG", i))
 
 <div class="figure" style="text-align: center">
 
-<img src="cathepsinG_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="elastase_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="hPR3_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
+<img src="Figures/cathepsinG_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/elastase_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/hPR3_synthetic-1.png" alt="PCA Plots for proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
 <p class="caption">
 PCA Plots for proteases (Left) and Mixtures (Right)
 </p>
@@ -671,7 +671,7 @@ plot_pca
 
 <div class="figure" style="text-align: center">
 
-<img src="mixturepca1.png" alt="PCA Visualization of significantly cleaved peptides by the supernatant of activated neutrophils" width="30%" height="20%" /><img src="mixturepca2.png" alt="PCA Visualization of significantly cleaved peptides by the supernatant of activated neutrophils" width="30%" height="20%" />
+<img src="Figures/mixturepca1.png" alt="PCA Visualization of significantly cleaved peptides by the supernatant of activated neutrophils" width="30%" height="20%" /><img src="Figures/mixturepca2.png" alt="PCA Visualization of significantly cleaved peptides by the supernatant of activated neutrophils" width="30%" height="20%" />
 <p class="caption">
 PCA Visualization of significantly cleaved peptides by the supernatant
 of activated neutrophils
@@ -697,7 +697,7 @@ plot_umap
 
 <div class="figure" style="text-align: center">
 
-<img src="mixtureumap1.png" alt="UMAP Visualization of Significantly Cleaved Peptides by the supernatant of activated neutrophils" width="30%" height="20%" /><img src="mixtureumap2.png" alt="UMAP Visualization of Significantly Cleaved Peptides by the supernatant of activated neutrophils" width="30%" height="20%" />
+<img src="Figures/mixtureumap1.png" alt="UMAP Visualization of Significantly Cleaved Peptides by the supernatant of activated neutrophils" width="30%" height="20%" /><img src="Figures/mixtureumap2.png" alt="UMAP Visualization of Significantly Cleaved Peptides by the supernatant of activated neutrophils" width="30%" height="20%" />
 <p class="caption">
 UMAP Visualization of Significantly Cleaved Peptides by the supernatant
 of activated neutrophils
@@ -745,7 +745,7 @@ ggseqlogo(UMAPclusters, ncol = 5)
 
 <div class="figure" style="text-align: center">
 
-<img src="mixture_pcalogos.png" alt="Clustered Motifs of Significantly Cleaved Peptides by the supernatant, from PCA (Left) and UMAP (Right) with K-means clustering" width="30%" height="20%" /><img src="mixture_umaplogos.png" alt="Clustered Motifs of Significantly Cleaved Peptides by the supernatant, from PCA (Left) and UMAP (Right) with K-means clustering" width="30%" height="20%" />
+<img src="Figures/mixture_pcalogos.png" alt="Clustered Motifs of Significantly Cleaved Peptides by the supernatant, from PCA (Left) and UMAP (Right) with K-means clustering" width="30%" height="20%" /><img src="Figures/mixture_umaplogos.png" alt="Clustered Motifs of Significantly Cleaved Peptides by the supernatant, from PCA (Left) and UMAP (Right) with K-means clustering" width="30%" height="20%" />
 <p class="caption">
 Clustered Motifs of Significantly Cleaved Peptides by the supernatant,
 from PCA (Left) and UMAP (Right) with K-means clustering
@@ -795,7 +795,7 @@ plot_umap <- plot_ly(x = umap_result$layout[,1], y = umap_result$layout[,2], typ
 plot_umap
 ```
 
-<img src="combinedpcapeptides.png" width="30%" height="20" style="display: block; margin: auto;" /><img src="combinedumappeptides.png" width="30%" height="20" style="display: block; margin: auto;" />
+<img src="Figures/combinedpcapeptides.png" width="30%" height="20" style="display: block; margin: auto;" /><img src="Figures/combinedumappeptides.png" width="30%" height="20" style="display: block; margin: auto;" />
 
 ### Serine Proteases within Cleaved Peptides by Neutrophil Supernatant
 
@@ -838,7 +838,7 @@ plot_umap <- plot_ly(x = umap_result$layout[,1], y = umap_result$layout[,2], typ
 plot_umap
 ```
 
-<img src="mixturepcapeptides.png" width="30%" height="20" style="display: block; margin: auto;" /><img src="mixtureumappeptides.png" width="30%" height="20" style="display: block; margin: auto;" />
+<img src="Figures/mixturepcapeptides.png" width="30%" height="20" style="display: block; margin: auto;" /><img src="Figures/mixtureumappeptides.png" width="30%" height="20" style="display: block; margin: auto;" />
 
 # Physiological Substrate Validation and Prediction
 
@@ -1144,7 +1144,7 @@ permutations = 1)
 
 <div class="figure" style="text-align: center">
 
-<img src="ADAMTHR_cibersortref.png" alt="CibersortX MEROPs Results" width="30%" /><img src="ADAMTHR_cibersort1.png" alt="CibersortX MEROPs Results" width="30%" /><img src="ADAMTHR_cibersort2.png" alt="CibersortX MEROPs Results" width="30%" />
+<img src="Figures/ADAMTHR_cibersortref.png" alt="CibersortX MEROPs Results" width="30%" /><img src="Figures/ADAMTHR_cibersort1.png" alt="CibersortX MEROPs Results" width="30%" /><img src="Figures/ADAMTHR_cibersort2.png" alt="CibersortX MEROPs Results" width="30%" />
 <p class="caption">
 CibersortX MEROPs Results
 </p>
@@ -1179,7 +1179,7 @@ immunedeconv::deconvolute_epic_custom(
 
 <div class="figure" style="text-align: center">
 
-<img src="ADAMTHR_epic1.png" alt="EPIC MEROPs results" width="20%" height="20%" /><img src="ADAMTHR_epic2.png" alt="EPIC MEROPs results" width="20%" height="20%" /><img src="ADAMTHR_epic3.png" alt="EPIC MEROPs results" width="20%" height="20%" />
+<img src="Figures/ADAMTHR_epic1.png" alt="EPIC MEROPs results" width="20%" height="20%" /><img src="Figures/ADAMTHR_epic2.png" alt="EPIC MEROPs results" width="20%" height="20%" /><img src="Figures/ADAMTHR_epic3.png" alt="EPIC MEROPs results" width="20%" height="20%" />
 <p class="caption">
 EPIC MEROPs results
 </p>
@@ -1195,11 +1195,11 @@ depicted unstandardized levels of activity/presence.
 
 ## CibersortX: Generation of Figures for Percentages
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-49-1.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-49-2.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-49-1.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-49-2.png" width="40%" />
 
 ## CibersortX: Generation of Figures for Absolute Scores
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-1.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-2.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-3.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-1.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-2.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-50-3.png" width="40%" />
 
 ### Statistical Comparisons
 
@@ -1222,7 +1222,7 @@ for(i in 1:length(conditions)){
 }
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-1.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-2.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-3.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-4.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-5.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-6.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-7.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-1.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-2.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-3.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-4.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-5.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-6.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-51-7.png" width="40%" />
 
 # Data from EPIC Results
 
@@ -1233,7 +1233,7 @@ EPIC.
 
 ## EPIC: Generation of Figures for Percentages
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-1.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-2.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-3.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-1.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-2.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-52-3.png" width="40%" />
 
 ### Statistical Comparisons
 
@@ -1255,7 +1255,7 @@ for(i in 1:length(conditions)){
 }
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-1.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-2.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-3.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-4.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-5.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-6.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-7.png" width="40%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-8.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-1.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-2.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-3.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-4.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-5.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-6.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-7.png" width="40%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-53-8.png" width="40%" />
 
 # Repeated Deconvolution Analyses with different protease references
 
@@ -1307,7 +1307,7 @@ Total Peptides included in Signature Matrix: 6259 (All proteases), 6166
 
 <div class="figure" style="text-align: center">
 
-<img src="referencenohPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" /><img src="referencewithhPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" />
+<img src="Figures/referencenohPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" /><img src="Figures/referencewithhPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" />
 <p class="caption">
 protease Signature Matrices without (left) and with (right) the
 inclusion of hPR3
@@ -1323,7 +1323,7 @@ Permutations = 1)
 
 <div class="figure" style="text-align: center">
 
-<img src="hpr3cibersortplot.png" alt="protease Percentages (left) and absolute scores (right) for all proteases" width="30%" height="50%" /><img src="mixturetable_withhPR3.png" alt="protease Percentages (left) and absolute scores (right) for all proteases" width="30%" height="50%" />
+<img src="Figures/hpr3cibersortplot.png" alt="protease Percentages (left) and absolute scores (right) for all proteases" width="30%" height="50%" /><img src="Figures/mixturetable_withhPR3.png" alt="protease Percentages (left) and absolute scores (right) for all proteases" width="30%" height="50%" />
 <p class="caption">
 protease Percentages (left) and absolute scores (right) for all
 proteases
@@ -1333,7 +1333,7 @@ proteases
 
 <div class="figure" style="text-align: center">
 
-<img src="mixturetable_withouthPR3.png" alt="protease Percentages (left) and absolute scores (right) for proteases with hPR3 excluded" width="30%" height="50%" /><img src="nohpr3cibersortplot.png" alt="protease Percentages (left) and absolute scores (right) for proteases with hPR3 excluded" width="30%" height="50%" />
+<img src="Figures/mixturetable_withouthPR3.png" alt="protease Percentages (left) and absolute scores (right) for proteases with hPR3 excluded" width="30%" height="50%" /><img src="Figures/nohpr3cibersortplot.png" alt="protease Percentages (left) and absolute scores (right) for proteases with hPR3 excluded" width="30%" height="50%" />
 <p class="caption">
 protease Percentages (left) and absolute scores (right) for proteases
 with hPR3 excluded
@@ -1366,7 +1366,7 @@ write.table(common_peptides, file="signature_peptides.txt", row.names = FALSE, c
 
 <div class="figure" style="text-align: center">
 
-<img src="hpr3EPIC1.png" alt="EPIC Results with all proteases" width="30%" height="20%" /><img src="hpr3EPIC2.png" alt="EPIC Results with all proteases" width="30%" height="20%" /><img src="hpr3EPIC3.png" alt="EPIC Results with all proteases" width="30%" height="20%" />
+<img src="Figures/hpr3EPIC1.png" alt="EPIC Results with all proteases" width="30%" height="20%" /><img src="Figures/hpr3EPIC2.png" alt="EPIC Results with all proteases" width="30%" height="20%" /><img src="Figures/hpr3EPIC3.png" alt="EPIC Results with all proteases" width="30%" height="20%" />
 <p class="caption">
 EPIC Results with all proteases
 </p>
@@ -1375,7 +1375,7 @@ EPIC Results with all proteases
 
 <div class="figure" style="text-align: center">
 
-<img src="nohpr3EPIC1.png" alt="EPIC Results without hPR3" width="30%" height="20%" /><img src="nohpr3EPIC2.png" alt="EPIC Results without hPR3" width="30%" height="20%" /><img src="nohpr3EPIC3.png" alt="EPIC Results without hPR3" width="30%" height="20%" />
+<img src="Figures/nohpr3EPIC1.png" alt="EPIC Results without hPR3" width="30%" height="20%" /><img src="Figures/nohpr3EPIC2.png" alt="EPIC Results without hPR3" width="30%" height="20%" /><img src="Figures/nohpr3EPIC3.png" alt="EPIC Results without hPR3" width="30%" height="20%" />
 <p class="caption">
 EPIC Results without hPR3
 </p>
@@ -1398,14 +1398,14 @@ heatmap_data <- percentage_data[, -1]
 pheatmap(heatmap_data, display_numbers = TRUE)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-63-1.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-63-1.png" width="30%" />
 
 ``` r
 barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
 ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-63-2.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-63-2.png" width="30%" />
 
 ## CibersortX: Generation of Figures for Absolute Scores
 
@@ -1417,13 +1417,13 @@ rownames(absolute_data) <- absolute_data[, 1]
 pheatmap(absolute_data[,-1], display_numbers = TRUE)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-1.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-1.png" width="30%" />
 
 ``` r
 ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-2.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-2.png" width="30%" />
 
 ``` r
 barplot_data <- cibersort_absolute %>%
@@ -1440,7 +1440,7 @@ ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = 
   geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-64-3.png" width="30%" />
 
 ### Statistical Comparisons
 
@@ -1459,7 +1459,7 @@ for(i in 1:length(conditions)){
 }
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-4.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-5.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-4.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-65-5.png" width="30%" />
 
 # Data from EPIC Results: all neutrophil serine proteases (profile 2)
 
@@ -1469,11 +1469,11 @@ were generated.
 
 ## EPIC: Generation of Figures for Percentages
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-67-3.png" width="30%" />
 
 ### Statistical Comparisons
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-4.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-5.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-6.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-4.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-5.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-68-6.png" width="30%" />
 
 # Data from CibersortX Results: cathepsin G and elastase (profile 3)
 
@@ -1489,14 +1489,14 @@ heatmap_data <- percentage_data[, -1]
 pheatmap(heatmap_data, display_numbers = TRUE)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-69-1.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-69-1.png" width="30%" />
 
 ``` r
 barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
 ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-69-2.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-69-2.png" width="30%" />
 
 ## CibersortX: Generation of Figures for Absolute Scores
 
@@ -1508,13 +1508,13 @@ rownames(absolute_data) <- absolute_data[, 1]
 pheatmap(absolute_data[,-1], display_numbers = TRUE)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-1.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-1.png" width="30%" />
 
 ``` r
 ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-2.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-2.png" width="30%" />
 
 ``` r
 barplot_data <- cibersort_absolute_nohPR3 %>%
@@ -1531,7 +1531,7 @@ ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = 
   geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-70-3.png" width="30%" />
 
 ### Statistical Comparisons
 
@@ -1550,7 +1550,7 @@ for(i in 1:length(conditions)){
 }
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-4.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-71-4.png" width="30%" />
 
 # Data from EPIC Results: cathepsin G and elastase (profile 3)
 
@@ -1560,11 +1560,11 @@ were generated.
 
 ## EPIC: Generation of Figures for Percentages
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-72-3.png" width="30%" />
 
 ### Statistical Comparisons
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-4.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-5.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-4.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-73-5.png" width="30%" />
 
 # Comparison to MEROPs Database
 
@@ -1657,13 +1657,13 @@ MEROPs substrates for each protease were visualized using ggseqlogo.
 ggseqlogo(meropsList, ncol = 5)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-76-1.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-76-1.png" width="40%" />
 
 ``` r
 ggseqlogo(meropsList_4mer, ncol = 5)
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-76-2.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-76-2.png" width="40%" />
 
 ## Generation of 4-mer Significantly Cleaved Peptides
 
@@ -1694,28 +1694,28 @@ venn_list <- list(`cathepsin G MEROPs 5mer` = meropsList[[1]], `elastase MEROPs 
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-1.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-1.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experiment cathepsin G` = peptideList[[1]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-2.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-2.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experiment elastase`= peptideList[[2]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-3.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-3.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experiment hPR3` = peptideList[[3]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-4.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-78-4.png" width="40%" />
 
 ## Venn Diagram Comparisons between 4-mers
 
@@ -1728,28 +1728,28 @@ venn_list <- list(`cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MER
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-1.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-1.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experimental cathepsin G` = peptide_4mers[[1]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-2.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-2.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experimental elastase` = peptide_4mers[[2]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-3.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-3.png" width="40%" />
 
 ``` r
 venn_list <-  list(`experimental hPR3` = peptide_4mers[[3]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
 ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
 ```
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-4.png" width="40%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-79-4.png" width="40%" />
 
 # Deconvolution Analysis using MEROPs-Based Protease Reference Matrices
 
@@ -1864,7 +1864,7 @@ permutations = 1)
 
 <div class="figure" style="text-align: center">
 
-<img src="cibermerops_controlref.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" /><img src="cibermerops_control.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" /><img src="cibermerops_control2.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" />
+<img src="Figures/cibermerops_controlref.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" /><img src="Figures/cibermerops_control.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" /><img src="Figures/cibermerops_control2.png" alt="CibersortX MEROPs results with phage control" width="30%" height="20%" />
 <p class="caption">
 CibersortX MEROPs results with phage control
 </p>
@@ -1873,7 +1873,7 @@ CibersortX MEROPs results with phage control
 
 Generated barplots and heatmaps from results
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-4.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-5.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-4.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-84-5.png" width="30%" />
 
 ### Deconvolution Results from EPIC
 
@@ -1882,7 +1882,7 @@ proteases without controls)
 
 <div class="figure" style="text-align: center">
 
-<img src="epicmerops_control1.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" /><img src="epicmerops_control2.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" /><img src="epicmerops_control3.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" />
+<img src="Figures/epicmerops_control1.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" /><img src="Figures/epicmerops_control2.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" /><img src="Figures/epicmerops_control3.png" alt="EPIC MEROPs results with phage control" width="30%" height="20%" />
 <p class="caption">
 EPIC MEROPs results with phage control
 </p>
@@ -1891,7 +1891,7 @@ EPIC MEROPs results with phage control
 
 Generated barplots and heatmaps from results
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-86-3.png" width="30%" />
 
 ## Deconvolution of Mixtures with MEROPs-based protease references and no phage controls (profile 5)
 
@@ -1899,7 +1899,7 @@ Generated barplots and heatmaps from results
 
 <div class="figure" style="text-align: center">
 
-<img src="cibermerops_nocontrolref.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" /><img src="cibermerops_nocontrol.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" /><img src="cibermerops_nocontrol2.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" />
+<img src="Figures/cibermerops_nocontrolref.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" /><img src="Figures/cibermerops_nocontrol.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" /><img src="Figures/cibermerops_nocontrol2.png" alt="CibersortX MEROPs results without phage control" width="30%" height="20%" />
 <p class="caption">
 CibersortX MEROPs results without phage control
 </p>
@@ -1908,13 +1908,13 @@ CibersortX MEROPs results without phage control
 
 Generated barplots and heatmaps from results
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-3.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-4.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-5.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-3.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-4.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-89-5.png" width="30%" />
 
 ### Deconvolution Results from EPIC
 
 <div class="figure" style="text-align: center">
 
-<img src="epicmerops_nocontrol1.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" /><img src="epicmerops_nocontrol2.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" /><img src="epicmerops_nocontrol3.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" />
+<img src="Figures/epicmerops_nocontrol1.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" /><img src="Figures/epicmerops_nocontrol2.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" /><img src="Figures/epicmerops_nocontrol3.png" alt="EPIC MEROPs results without phage control" width="30%" height="20%" />
 <p class="caption">
 EPIC MEROPs results without phage control
 </p>
@@ -1923,4 +1923,4 @@ EPIC MEROPs results without phage control
 
 Generated barplots and heatmaps from results
 
-<img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-1.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-2.png" width="30%" /><img src="Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-3.png" width="30%" />
+<img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-1.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-2.png" width="30%" /><img src="Figures/Protease-Analysis-Mid-June_files/figure-gfm/unnamed-chunk-91-3.png" width="30%" />
