@@ -27,6 +27,8 @@ filtered, and translated into a counts table of cleaved peptides.
 <div class="figure" style="text-align: center">
 
 <img src="Figures/phagelibraryprep.png" alt="Phage library generation and experimental design" width="40%" height="20%" />
+<img src="Figures/neutrophil.png" alt="" width="40%" height="20%" />
+
 <p class="caption">
 Phage library generation and experimental design
 </p>
@@ -187,7 +189,7 @@ pheatmap(samplePoisDistMatrix, clustering_distance_rows = poisd_mixture$dd, clus
 
 <div class="figure" style="text-align: center">
 
-<img src="Figures/Poisson_protease.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/Poisson_Mixture.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
+<img src="Figures/Poisson_Protease.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" /><img src="Figures/Poisson_Mixture.png" alt="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)" width="40%" height="20%" />
 <p class="caption">
 Poisson Distance Plots for Proteases (Left) and Mixtures (Right)
 </p>
@@ -1307,7 +1309,7 @@ Total Peptides included in Signature Matrix: 6259 (All proteases), 6166
 
 <div class="figure" style="text-align: center">
 
-<img src="Figures/referencenohPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" /><img src="Figures/referencewithhPR3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" />
+<img src="Figures/referencenohpr3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" /><img src="Figures/referencewithhpr3.png" alt="protease Signature Matrices without (left) and with (right) the inclusion of hPR3" width="30%" height="20%" />
 <p class="caption">
 protease Signature Matrices without (left) and with (right) the
 inclusion of hPR3
