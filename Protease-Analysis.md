@@ -21,7 +21,7 @@ a complex biological mixture for subsequent analysis.
 
 After incubation, cleaved/released phages are collected, with its DNA
 isolated and purified, followed by 2 rounds of PCR and high-throughput
-sequencing on Nextseq2000. Sequencing reads were assembled, quality
+sequencing on NextSeq2000. Sequencing reads were assembled, quality
 filtered, and translated into a counts table of cleaved peptides.
 
 <div class="figure" style="text-align: center">
