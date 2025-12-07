@@ -1,0 +1,2006 @@
+---
+title: "Analysis of Phage Display Protease and Supernatant Screens"
+author: "Enoch Yu"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Introduction
+
+A substrate phage display library of randomized 5-mers was constructed, with each 5-mer having a FLAG peptide at the end. Phages were immobilized onto anti-FLAG beads, and the phage library was screened against 3 neutrophil serine proteases: cathepsin G, elastase, and human proteinase 3 (hPR3). This was followed by 2 controls: with no protease (baseline phage release) and with a FLAG peptide elution (unselected phage library). All were conducted in triplicate.
+
+Screening was repeated for the supernatant releasate of activated neutrophils, in the presence of no inhibitors, AEBSF, EDTA, and AEBSF+EDTA. The broad-spectrum inhibitor AEBSF inhibits serine proteases, while EDTA inhibits metalloproteases. The supernatant formed a complex biological mixture for subsequent analysis.
+
+After incubation, cleaved/released phages are collected, with its DNA isolated and purified, followed by 2 rounds of PCR and high-throughput sequencing on Nextseq2000. Sequencing reads were assembled, quality filtered, and translated into a counts table of cleaved peptides.
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="Phage library generation and experimental design",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("phagelibraryprep.png"))
+```
+
+# Setup for Analysis
+
+This R markdown file will conduct the data analysis for the Deep Protease Profiling manuscript, using 2 files as the starting point. These files are the counts of cleaved peptides across proteases and across supernatant mixtures, generated from the GitHub pipeline with a row-sum filter of 6. These files were provided as supplementary data files and can be obtained at our GitHub repository.
+
+neutrophil_mixture_data.csv neutrophil_serine_protease_data.csv
+
+To proceed, please place these 2 files in the same directory as this R markdown file. This R markdown also should be run after a prior R markdown file (CombinedAnalysis.Rmd). 6 control frequency files previously generated would be used in this R markdown file.
+
+### Opening Files
+
+Cleaved peptide counts were passed through a rowsum filter of 6. The unfiltered counts table was presented in the supplementary data files.
+
+```{r File Opening, warning = FALSE}
+set.seed(123)
+protease_counts <- read.csv(file = "neutrophil_serine_protease_data.csv", header=TRUE,row.names=1)
+mixture_counts <- read.csv(file = "neutrophil_mixture_data.csv", header=TRUE,row.names=1)
+```
+
+Data Parameters for the protease conditions were loaded: cathepsin G, elastase, hPR3, no protease (negative control), and FLAG peptide elution of phage (positive control). Each treatment was conducted in triplicate.
+
+```{r Data Parameters}
+proteases = c("cathepsin G","elastase","hPR3","no protease")
+protease_replicates = c("C1", "C2", "C3", "E1", "E2", "E3", "H1", "H2", "H3", "V1", "V2", "V3", "N1", "N2", "N3")
+protease_col = c("cathepsin G","cathepsin G","cathepsin G" ,"elastase","elastase","elastase","hPR3","hPR3","hPR3","no protease", "no protease", "no protease", "FLAG","FLAG","FLAG")
+protease_colname = c("cathepsin G 1","cathepsin G 2","cathepsin G 3","elastase 1","elastase 2","elastase 3","hPR3 1","hPR3 2","hPR3 3","no protease 1", "no protease 2", "no protease 3", "FLAG 1","FLAG 2","FLAG 3")
+control = "FLAG"
+```
+
+Data Parameters for the mixture conditions were loaded: supernatant mixtures of activated neutrophils with no inhibitor, with AEBSF, with EDTA, with AEBSF + EDTA, and FLAG peptide elution of phage (positive control). Each treatment was conducted in triplicate.
+
+```{r Data Parameters 2}
+mixtures = c("no inhibitor","AEBSF","EDTA","AEBSF+EDTA")
+mixture_replicates = c("NI1","NI2","NI3","A1","A2","A3","ED1","ED2","ED3","AE1","AE2","AE3","G1","G2","G3")
+mixture_col = c("no inhibitor","no inhibitor","no inhibitor", "AEBSF","AEBSF","AEBSF","EDTA","EDTA","EDTA","AEBSF+EDTA","AEBSF+EDTA","AEBSF+EDTA","FLAG","FLAG","FLAG")
+mixture_colname = c("no inhibitor 1","no inhibitor 2","no inhibitor 3","AEBSF 1","AEBSF 2","AEBSF 3","EDTA 1","EDTA 2","EDTA 3","AEBSF+EDTA 1", "AEBSF+EDTA 2", "AEBSF+EDTA 3", "FLAG 1","FLAG 2","FLAG 3")
+```
+
+Necessary packages were loaded: dplyr, tidyr, RColorBrewer, reshape, factoextra, stringr, openxlsx, stats, multcomp, Hmisc, gridExtra, tidyverse, ggplot2, ggseqlogo, ggpubr, ggbeeswarm, ggVennDiagram, ggVenn, pheatmap, PoiClaClu, BiocManager, S4Arrays, DelayedArray, DESeq2, DECIPHER, plotly, plot3D, dbscan, forcats, umap, immunedeconv, plotly, clusterSim
+
+```{r Setup1, include=FALSE, warning = FALSE, echo = FALSE}
+if(!require(dplyr)){install.packages("dplyr")}
+library(dplyr)
+if(!require(tidyr)){install.packages("tidyr")}
+library(tidyr)
+if(!require(RColorBrewer)){install.packages("RColorBrewer")}
+library(RColorBrewer)
+if(!require(reshape)){install.packages("reshape")}
+library(reshape)
+if(!require(factoextra)){install.packages("factoextra")}
+library(factoextra)
+if(!require(stringr)){install.packages("stringr")}
+library(stringr)
+if(!require(openxlsx)){install.packages("openxlsx")}
+library(openxlsx)
+if(!require(stats)){install.packages("stats")}
+library(stats)
+if(!require(multcomp)){install.packages("multcomp")}
+library(multcomp)
+if(!require(Hmisc)){install.packages("Hmisc")}
+library(Hmisc)
+if(!require(gridExtra)){install.packages("gridExtra")}
+library(gridExtra)
+if(!require(tidyverse)){install.packages("tidyverse")}
+library(tidyverse)
+
+if(!require(ggplot2)){install.packages("ggplot2")}
+library(ggplot2)
+if(!require(ggseqlogo)){install.packages("ggseqlogo")}
+library(ggseqlogo)
+if(!require(ggpubr)){install.packages("ggpubr")}
+library(ggpubr)
+if(!require(ggbeeswarm)){install.packages("ggbeeswarm")}
+library(ggbeeswarm)
+if(!require(ggVennDiagram)){install.packages("ggVennDiagram")}
+library(ggVennDiagram)
+if(!require(ggvenn)){install.packages("ggvenn")}
+library(ggvenn)
+if(!require(pheatmap)){install.packages("pheatmap")}
+library(pheatmap)
+if(!require(PoiClaClu)){install.packages("PoiClaClu")}
+library(PoiClaClu)
+
+if (!require("BiocManager", quietly = TRUE)){install.packages("BiocManager")}
+if(!require(S4Arrays)){BiocManager::install("S4Arrays")}
+library(S4Arrays)
+if(!require(DelayedArray)){BiocManager::install("DelayedArray")}
+library(DelayedArray)
+
+if(!require(DESeq2)){BiocManager::install("DESeq2")}
+library(DESeq2)
+if(!require(DECIPHER)){BiocManager::install("DECIPHER")}
+library(DECIPHER)
+if(!require(DiffLogo)){BiocManager::install("DiffLogo")}
+library(DiffLogo)
+
+if(!require(forcats)){install.packages("forcats")}
+library(forcats)
+if(!require(umap)){install.packages("umap")}
+library(umap)
+if(!require(plotly)){install.packages("plotly")}
+library(plotly)
+if(!require(clusterSim)){install.packages("clusterSim")}
+library(clusterSim)
+
+
+if(!require(remotes)){install.packages("remotes")}
+library(remotes)
+remotes::install_github("omnideconv/immunedeconv")
+```
+
+# Initial Analysis of Protease and Mixture Profiles
+
+The cleaved peptides data was analyzed with a bioinformatics approach, adapting computational packages developed for DNA and RNA sequencing datasets.
+
+## DESeq2 Analysis Set Up
+
+DESeq2 was employed for data normalization and differential enrichment analysis to identify peptides significantly cleaved relative to control (the unselected phage library). Prior to analysis, peptides with a stop codon or row sum below 10 were removed.
+
+DESeq2 Analysis on Peptide Dataset for Proteases
+
+```{r Setup2, warning = FALSE, results = 'hide'}
+data_NS <- subset(protease_counts, grepl("X", row.names(protease_counts))==FALSE)
+countData <- as.matrix(data_NS)
+colData <- data.frame(condition=factor(protease_col))
+dds=DESeqDataSetFromMatrix(countData, colData, formula(~ condition))
+dds$condition <- relevel(dds$condition, ref = "FLAG")
+keep <- rowSums(counts(dds)) >= 10
+dds_protease <- dds[keep,]
+```
+
+DESeq2 Analysis on Peptide Dataset for Mixtures
+
+```{r Setup3, warning = FALSE, results = 'hide'}
+data_NS <- subset(mixture_counts, grepl("X", row.names(mixture_counts))==FALSE)
+countData <- as.matrix(data_NS)
+colData <- data.frame(condition=factor(mixture_col))
+dds=DESeqDataSetFromMatrix(countData, colData, formula(~ condition))
+dds$condition <- relevel(dds$condition, ref = "FLAG")
+keep <- rowSums(counts(dds)) >= 10
+dds_mixture <- dds[keep,]
+```
+
+DESeq2 Analysis and File Save for Future Testing
+
+```{r DESeq2_1, eval = FALSE}
+dds_protease=DESeq(dds_protease)
+dds_mixture=DESeq(dds_mixture)
+saveRDS(dds_protease, file = paste0("protease_dds_object.rds"))
+saveRDS(dds_mixture, file = paste0("mixture_dds_object.rds"))
+```
+
+```{r DESeq2_2, include = FALSE}
+dds_protease <- readRDS(paste0("protease_dds_object.rds"))
+dds_mixture <- readRDS(paste0("mixture_dds_object.rds"))
+```
+
+## Clustering Analysis
+
+Poisson distance hierarchal clustering and PCA (principal component analysis) visualization was conducted on the DESeq2-normalized datasets to assess intra- and inter-condition variability. Clustering also provided an overview of broad-scale substrate cleavage patterns, displaying similarities/differences across conditions.
+
+Poisson Distance Dendrogram for Proteases
+
+```{r Poisson_2, eval = FALSE}
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+poisd_protease <- PoissonDistance(t(counts(dds_protease)))
+samplePoisDistMatrix <- as.matrix(poisd_protease$dd)
+rownames(samplePoisDistMatrix) <- paste(dds_protease$condition)
+colnames(samplePoisDistMatrix) <- NULL
+rownames(samplePoisDistMatrix) <- paste(protease_colname)
+pheatmap(samplePoisDistMatrix, clustering_distance_rows = poisd_protease$dd, clustering_distance_cols = poisd_protease$dd, col = colors)
+```
+
+Poisson Distance Dendrogram for Mixtures
+
+```{r Poisson_3, eval = FALSE}
+poisd_mixture <- PoissonDistance(t(counts(dds_mixture)))
+samplePoisDistMatrix <- as.matrix(poisd_mixture$dd)
+rownames(samplePoisDistMatrix) <- paste(dds_mixture$condition)
+colnames(samplePoisDistMatrix) <- NULL
+rownames(samplePoisDistMatrix) <- paste(mixture_colname)
+pheatmap(samplePoisDistMatrix, clustering_distance_rows = poisd_mixture$dd, clustering_distance_cols = poisd_mixture$dd, col = colors)
+```
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="Poisson Distance Plots for Proteases (Left) and Mixtures (Right)",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("Poisson_protease.png","Poisson_Mixture.png"))
+```
+
+PCA Plots for Protease and Mixture conditions
+
+```{r, eval = FALSE}
+rld <- rlog(dds_protease, blind=FALSE)
+pca <- prcomp(t(assay(rld)))
+fviz_pca_ind(pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, title = "PCA - Protease Conditions")
+
+rld <- rlog(dds_mixture, blind=FALSE)
+pca <- prcomp(t(assay(rld)))
+fviz_pca_ind(pca, col.ind = "cos2", gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"), repel = TRUE, title = "PCA - Mixture Conditions")
+```
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="PCA Plots for Proteases (Left) and Mixtures (Right)",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("PCA_protease.png","PCA_mixture.png"))
+```
+
+# Generation of Significantly Cleaved Peptides
+
+Phage libraries are known to possess baseline compositional bias in amino acid expression, impacting peptides and sequence counts. To account for background bias, DESeq2 identified peptides significantly enriched against the unselected library as control (FLAG peptide elution). These cleaved peptides were used to capture a proteolytic activity profile for that protease or mixture.
+
+To limit false positives, a Bonferroni correction with stringent thresholds of an adjusted p-value \< 10\^-9 and log 2-fold change \> 1 were applied. Peptides that met these conditions were classified as a significantly cleaved peptide.
+
+Defining Parameters and Thresholds
+
+```{r}
+pvalthreshold = 0.000000001
+log2foldthreshold = 1
+combined <- append(proteases, mixtures)
+peptideList <- list()
+```
+
+Differential Enrichment Analysis for Protease Conditions
+
+```{r}
+for(i in 1:length(proteases)){
+  res_bonf <- results(dds_protease, contrast=c("condition",proteases[i],"FLAG"), alpha=pvalthreshold,pAdjustMethod = "bonf")
+  res_bonf_sig <- subset(as.data.frame(res_bonf[order(res_bonf$pvalue),]), padj < pvalthreshold)
+  AA_seq <- rownames(res_bonf_sig)
+  res_bonf_sig  <- cbind(AA_seq, res_bonf_sig)
+  res_bonf_sig_enrich <- subset(as.data.frame(res_bonf_sig[order(res_bonf$baseMean),]), log2FoldChange > log2foldthreshold)
+  bonf_sig_AA <- as.character(rownames(res_bonf_sig_enrich))
+  print(paste0(proteases[i], ": ", length(res_bonf_sig_enrich$baseMean)))
+  write.table(res_bonf_sig_enrich,file=paste0("deseq2_", proteases[i],".txt"), col.names=TRUE, append=FALSE, quote=FALSE, row.names = FALSE)
+  write.table(bonf_sig_AA,file=paste0("sig_peptides_", proteases[i],".txt"), col.names=FALSE, append=FALSE, quote=FALSE, row.names = FALSE)
+  peptideList <- append(peptideList, list(bonf_sig_AA))
+  names(peptideList)[length(peptideList)] <- proteases[i]
+}
+```
+
+Differential Enrichment Analysis for Mixture Conditions
+
+```{r}
+for(i in 1:length(mixtures)){
+  res_bonf <- results(dds_mixture, contrast=c("condition",mixtures[i],"FLAG"), alpha=pvalthreshold,pAdjustMethod = "bonf")
+  res_bonf_sig <- subset(as.data.frame(res_bonf[order(res_bonf$pvalue),]), padj < pvalthreshold)
+  AA_seq <- rownames(res_bonf_sig)
+  res_bonf_sig  <- cbind(AA_seq, res_bonf_sig)
+  res_bonf_sig_enrich <- subset(as.data.frame(res_bonf_sig[order(res_bonf$baseMean),]), log2FoldChange > log2foldthreshold)
+  bonf_sig_AA <- as.character(rownames(res_bonf_sig_enrich))
+  print(paste0(mixtures[i], ": ", length(res_bonf_sig_enrich$baseMean)))
+  write.table(res_bonf_sig_enrich,file=paste0("deseq2_", mixtures[i],".txt"), col.names=TRUE, append=FALSE, quote=FALSE, row.names = FALSE)
+  write.table(bonf_sig_AA,file=paste0("sig_peptides_", mixtures[i],".txt"), col.names=FALSE, append=FALSE, quote=FALSE, row.names = FALSE)
+  peptideList <- append(peptideList, list(bonf_sig_AA))
+  names(peptideList)[length(peptideList)] <- mixtures[i]
+}
+```
+
+MA plots
+
+To visualize the peptides and their corresponding counts or log 2 fold change, relative to control, MA plots were made. Blue dots represent peptides with a Bonferroni p-adj \< 10\^-9.
+
+```{r, eval = FALSE}
+for (i in 1:length(proteases)){
+  res_bonf <- results(dds_protease, contrast=c("condition",proteases[i],control), alpha=pvalthreshold,pAdjustMethod = "bonferroni")
+  pdf(paste0(proteases[i], '_DEseq_plotMA.pdf'))
+  plotMA(res_bonf,alpha=pvalthreshold,ylim=c(-8,8),main='Plot')
+  dev.off()
+}
+for (i in 1:length(mixtures)){
+  res_bonf <- results(dds_mixture, contrast=c("condition",mixtures[i],control), alpha=pvalthreshold,pAdjustMethod = "bonferroni")
+  pdf(paste0(mixtures[i], '_DEseq_plotMA.pdf'))
+  plotMA(res_bonf,alpha=pvalthreshold,ylim=c(-8,8),main='Plot')
+  dev.off()
+}
+```
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="Example of a MA plot for cathepsin G",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("csgmaplot.png"))
+```
+
+Sequence Logos
+
+For the significantly cleaved peptides, sequence logos were constructed using ggseqlogo to depict amino acid motifs.
+
+```{r,out.width="60%"}
+proteases_list <- list(`cathepsin G` = peptideList$`cathepsin G`,elastase=peptideList$elastase, hPR3=peptideList$hPR3, `no protease`=peptideList$`no protease`)
+mixtures_list <- list(`no inhibitor` = peptideList$`no inhibitor`,AEBSF=peptideList$AEBSF, EDTA=peptideList$EDTA, `AEBSF+EDTA`=peptideList$`AEBSF+EDTA`)
+combined_list <- append(proteases_list, mixtures_list)
+ggseqlogo(combined_list)
+ggseqlogo(combined_list, method = 'prob')
+```
+
+## Peptide Space Comparisons
+
+Venn diagrams using ggVennDiagram were used to determine the overlap in cleaved peptides between proteases, mixtures, and other conditions, as well as areas of distinct activity.
+
+```{r, echo=FALSE,out.width="49%"}
+proteases_only_list <- list(`cathepsin G` = peptideList$`cathepsin G`,elastase=peptideList$elastase, hPR3=peptideList$hPR3)
+comparison_venn_list <- append(proteases_only_list, list(`no inhibitor` = peptideList$`no inhibitor`))
+comparison_venn_list2 <- append(proteases_only_list, list(AEBSF = peptideList$AEBSF))
+
+ggVennDiagram(proteases_list) + scale_x_continuous(expand = expansion(mult = .2))
+ggVennDiagram(mixtures_list) + scale_x_continuous(expand = expansion(mult = .2))
+ggVennDiagram(proteases_only_list) + scale_x_continuous(expand = expansion(mult = .2))
+ggVennDiagram(comparison_venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+ggVennDiagram(comparison_venn_list2) + scale_x_continuous(expand = expansion(mult = .2))
+```
+
+Functions to Convert Peptides between TXT and Fasta files
+
+```{r}
+txt_to_fasta <- function(fname) {
+  AA_seqs <- scan(file=paste0(fname, ".txt"), what="", sep="\n")
+  fastaFile <- paste0(fname,".fasta")
+  fileConn<-file(fastaFile)
+  sink(fastaFile)
+  AA_seqs <- as.data.frame(AA_seqs)
+  for (i in 1:length(AA_seqs$AA_seqs)){
+    cat(paste0(">",AA_seqs$AA_seqs[i]))
+    cat("\n")
+    cat(AA_seqs$AA_seqs[i])
+    cat("\n")
+  }
+  close(fileConn)
+  sink() 
+}
+
+fasta_to_txt <- function(fname) {
+  AA_seqs <- scan(file=paste0(fname, ".fasta"), what="", sep="\n")
+  AA_seqs <- AA_seqs[!grepl(">", AA_seqs)]
+  txtFile <- paste0(fname,".txt")
+  fileConn<-file(txtFile)
+  sink(txtFile)
+  AA_seqs <- as.data.frame(AA_seqs)
+  for (i in 1:length(AA_seqs$AA_seqs)){
+    cat(AA_seqs$AA_seqs[i])
+    cat("\n")
+  }
+  close(fileConn)
+  sink() 
+}
+```
+
+## Unsupervised Alignment of Significantly Cleaved Peptides, using Decipher
+
+In this 5-mer peptide format, a key limitation was that proteolytic cleavage may have occurred anywhere along the 5-mer. Based on 4 possible P1-P1' cleavage sites, this formed a 9-mer alignment space. The DECIPHER R Package was used to perform unsupervised alignment and estimate the P1 position.
+
+This alignment was conducted on the significantly cleaved peptides previously determined for each condition. The parameter terminalGap was adjusted to fit peptides into 9-mer space.
+
+```{r, eval = FALSE}
+for(i in 1:length(combined)){
+  txt_to_fasta(paste0("sig_peptides_",combined[i]))
+  fastaFile <- paste0("sig_peptides_",combined[i], ".fasta")
+  seqs <- readAAStringSet(fastaFile)
+  aligned <- AlignSeqs(seqs, gapOpening = -200, useStructures = TRUE, terminalGap = -8)
+  #the parameter terminalGap was adjusted to fit 9-mer space
+  writeXStringSet(aligned,file= paste0("aligned_sig_peptides_",combined[i], ".fasta"))
+  fasta_to_txt(paste0("aligned_sig_peptides_",combined[i]))
+}
+```
+
+Sequence Logos of Aligned Peptides
+
+The aligned position with the most dominant motifs was determined as P1 for the 9-mer sequence.
+
+```{r}
+alignedpeptideList <- list()
+for(i in 1:length(combined)){
+  alignedAA <- read.table(paste0("aligned_sig_peptides_",combined[i], ".txt"))
+  df_aligned <- apply(alignedAA, 1, function(row) {
+    unlist(strsplit(row, ""))
+  })
+  df_aligned <- as.data.frame(t(df_aligned))
+
+  seqs <- readAAStringSet(paste0("aligned_sig_peptides_",combined[i], ".fasta"))
+  consensus <- consensusMatrix(seqs, as.prob = T)
+  consensus <- consensus[rownames(consensus) != "-", ]
+  highest_col <- which.max(colSums(consensus * (consensus > 0.095)))
+  df_9mer <- df_aligned[, (highest_col-4):(highest_col+4)]
+  merged_9mer <- apply(df_9mer, 1, function(row) paste(row, collapse = ""))
+  alignedpeptideList <- append(alignedpeptideList, list(merged_9mer))
+  names(alignedpeptideList)[length(alignedpeptideList)] <- combined[i]
+  write.table(merged_9mer, file = paste0("aligned_9mer_",combined[i], ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  txt_to_fasta(paste0("aligned_9mer_",combined[i]))
+}
+```
+
+Logos of aligned peptides were graphed using ggseqlogo.
+
+```{r}
+proteases_aligned_list <- list(`cathepsin G` = alignedpeptideList$`cathepsin G`,elastase=alignedpeptideList$elastase, hPR3=alignedpeptideList$hPR3, `no protease`=alignedpeptideList$`no protease`)
+mixtures_aligned_list <- list(`no inhibitor` = alignedpeptideList$`no inhibitor`,AEBSF=alignedpeptideList$AEBSF, EDTA=alignedpeptideList$EDTA, `AEBSF+EDTA`=alignedpeptideList$`AEBSF+EDTA`)
+combined_aligned_list <- append(proteases_aligned_list, mixtures_aligned_list)
+ggseqlogo(combined_aligned_list)
+ggseqlogo(combined_aligned_list, method = 'prob')
+```
+
+Sequence logos were compared between conditions using Difflogo.
+
+```{r}
+ASN = DiffLogo::Alphabet( #Amino Acid Colors
+  c("A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R","S","T","V","W","Y"),
+  c('#2E2E2E', '#058644', '#C5003E', '#C5003E','#2E2E2E','#058644', '#0046C5','#2E2E2E', '#0046C5','#2E2E2E','#2E2E2E', '#720091','#2E2E2E','#720091','#0046C5','#058644','#058644', '#2E2E2E', '#2E2E2E','#058644'),
+  FALSE
+)
+AA = c("A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y")
+
+PPMs_list <- list()
+aligned_PPMs_list <- list()
+
+for (i in 1:length(combined)){
+  sequences = peptideList[[i]]
+  AA_counts <- as.data.frame(matrix(nrow=nchar(length(sequences[1])), ncol=20))
+  colnames(AA_counts)<-AA
+  for (j in 1:nchar(sequences[i])) {
+    temp <- substr(sequences, j, j)
+    peptideNames <- AA %>%  unique() %>%data.frame(stringsAsFactors = F)
+    colnames(peptideNames) <- "peptideNames"
+    result<-apply(peptideNames,1,function(x) str_count(temp, x["peptideNames"]))
+    colnames(result) <- peptideNames$peptideNames
+    result<-result[, AA]
+    for (k in 1:20) {
+      AA_counts[j,k] <- sum(result[,k])
+    }
+  }
+  AA_counts$total <- apply(AA_counts, 1, sum)
+  PPM <- AA_counts/AA_counts$total #position probability matrix 
+  PPM <- PPM[,1:20]
+  PPM <- PPM %>% t() %>% as.data.frame()
+  colnames(PPM) <- as.character(1:nchar(sequences[1]))
+  
+  PPMs_list[[names(peptideList)[i]]] <- PPM
+  
+  sequences = alignedpeptideList[[i]]
+  AA_counts <- as.data.frame(matrix(nrow=nchar(length(sequences[1])), ncol=20))
+  colnames(AA_counts)<-AA
+  for (j in 1:nchar(sequences[i])) {
+    temp <- substr(sequences, j, j)
+    peptideNames <- AA %>%  unique() %>%data.frame(stringsAsFactors = F)
+    colnames(peptideNames) <- "peptideNames"
+    result<-apply(peptideNames,1,function(x) str_count(temp, x["peptideNames"]))
+    colnames(result) <- peptideNames$peptideNames
+    result<-result[, AA]
+    for (k in 1:20) {
+      AA_counts[j,k] <- sum(result[,k])
+    }
+  }
+  AA_counts$total <- apply(AA_counts, 1, sum)
+  PPM <- AA_counts/AA_counts$total #position probability matrix 
+  PPM <- PPM[,1:20]
+  PPM <- PPM %>% t() %>% as.data.frame()
+  colnames(PPM) <- as.character(1:nchar(sequences[1]))
+  
+  aligned_PPMs_list[[names(alignedpeptideList)[i]]] <- PPM
+}
+```
+
+```{r, echo=FALSE, results = 'hide'}
+DiffLogo::diffLogoTable(PWMs = PPMs_list[1:3], alphabet=ASN)
+DiffLogo::diffLogoTable(PWMs = PPMs_list[5:8], alphabet=ASN)
+
+DiffLogo::diffLogoTable(PWMs = aligned_PPMs_list[1:3], alphabet=ASN)
+DiffLogo::diffLogoTable(PWMs = aligned_PPMs_list[5:8], alphabet=ASN)
+```
+
+## Synthetic Alignment of Significantly Cleaved Peptides
+
+An alternative supervised alignment method was synthetic alignment, centering peptides at the P1 position based on each protease's known P1 site preferences. This was conducted for the 3 neutrophil serine proteases. Peptides without the specified amino acids were unaligned.
+
+Cathepsin G: F/Y Elastase: V/I hPR3: V/I
+
+```{r}
+strfind <- function(s, char) { #function for finding the first index where an amino acid appears in the peptide
+  temp <- 1
+  if(length(rev(grep(char, unlist(strsplit(s, NULL)), fixed=T))) > 1){
+    temp <- length(rev(grep(char, unlist(strsplit(s, NULL)), fixed=T)))}
+  rev(grep(char, unlist(strsplit(s, NULL)), fixed=T))[temp]}
+```
+
+Synthetic Alignment
+
+```{r}
+centers <- list(c("F", "Y"), c("V", "I"), c("V", "I"))
+syntheticList <- list()
+unalignedList <- list()
+for(i in 1:3){
+  sequences <- peptideList[[i]]
+  synthetic <- c()
+  unaligned <- c()
+  for(j in 1:length(sequences)){
+    pep = sequences[j]
+    for(k in 1:length(centers)){
+      index <- strfind(pep, centers[[i]][k])
+      if(!is.na(index)){break}}
+    if(is.na(index)){unaligned <- c(unaligned, pep)
+    next}
+    left <- 9 - nchar(pep) - index + 1
+    right <- index - 1
+    alignedpep <- paste0(paste0(rep('-', left), collapse = ""), pep, paste0(rep('-', right), collapse = ""))
+    synthetic <- c(synthetic, alignedpep)}
+  syntheticList <- append(syntheticList, list(synthetic))
+  names(syntheticList)[length(syntheticList)] <- combined[i]
+  unalignedList <- append(unalignedList, list(unaligned))
+  names(unalignedList)[length(unalignedList)] <- combined[i]
+  write.table(synthetic, file = paste0("synthetic_9mer_",combined[i], ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  txt_to_fasta(paste0("synthetic_9mer_",combined[i]))
+}
+```
+
+Sequence logos of Synthetically Aligned Peptides
+
+```{r, out.width="30%"}
+synthetic_aligned_list <- list(`cathepsin G` = syntheticList$`cathepsin G`,elastase=syntheticList$elastase, hPR3=syntheticList$hPR3)
+synthetic_unaligned_list <- list(`cathepsin G` = unalignedList$`cathepsin G`,elastase=unalignedList$elastase, hPR3=unalignedList$hPR3)
+
+ggseqlogo(synthetic_aligned_list) #aligned peptides
+ggseqlogo(synthetic_unaligned_list) #unaligned peptides
+```
+
+## Icelogos for Peptides with Unsupervised Alignment, referencing the background unselected library
+
+To assess the relative enrichment of peptides at each position, compared to the background phage library, Icelogos were further generated using the Icelogo SOAP server. Motifs with a p\<0.05 for % difference, relative to control
+
+<https://github.com/compomics/icelogo>
+
+Positive Set: significantly cleaved peptides with DECIPHER alignment Negative Set: list of peptides representing amino acid frequencies of the unselected phage library (FLAG peptide elution)
+
+Fasta files of the Negative Set was sourced from the Preliminary Analysis Rmd file.
+
+5-mers Space: (Icelogos for unaligned peptides)
+
+Control Frequencies for Protease Screen: 'control_frequency_protease.fasta' 
+
+Control Frequencies for Mixture Screen: 'control_frequency_mixture.fasta' 
+
+Control Frequencies across both Screens: 'control_frequency_combined.fasta'
+
+9-mers Space: (Icelogos for aligned peptides)
+
+Control Frequencies for Protease Screen: 'control_frequency_protease_9mer.fasta' 
+
+Control Frequencies for Mixture Screen: 'control_frequency_mixture_9mer.fasta' 
+
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="PCA Plots for proteases (Left) and Mixtures (Right)",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("cathepsinG_icelogo-1.png","elastase_icelogo-1.png", "hPR3_icelogo-1.png", "no protease_icelogo-1.png"))
+knitr::include_graphics(c("noinhibitor_icelogo-1.png","AEBSF_icelogo-1.png", "EDTA_icelogo-1.png", "AEBSFEDTA_icelogo-1.png"))
+```
+
+## Icelogos for Peptides with Synthetic Alignment
+
+For 3 proteases with synthetic alignment, to assess if the screen provided a true signal, a similarly synthetically aligned background dataset was used. Every possible peptide from the unselected phage library was synthetically aligned based on F/Y or V/I. This dataset was used as the Negative Set for Icelogo.
+
+```{r, eval = FALSE}
+data_NS <- subset(protease_counts, grepl("X", row.names(protease_counts))==FALSE)
+rowsum_filter <- data_NS[rowSums(data_NS) >= 10, ]
+FLAG_peptides <- rownames(rowsum_filter[rowSums(rowsum_filter[, 13:15]) > 0, ])
+sequences <- FLAG_peptides
+
+centers <- list(c("F", "Y"), c("V", "I"))
+syntheticFLAG <- list()
+unalignedFLAG <- list()
+for(i in 1:2){
+  synthetic <- c()
+  unaligned <- c()
+  for(j in 1:length(sequences)){
+    pep = sequences[j]
+    for(k in 1:length(centers)){
+      index <- strfind(pep, centers[[i]][k])
+      if(!is.na(index)){break}}
+    if(is.na(index)){unaligned <- c(unaligned, pep)
+    next}
+    left <- 9 - nchar(pep) - index + 1
+    right <- index - 1
+    alignedpep <- paste0(paste0(rep('-', left), collapse = ""), pep, paste0(rep('-', right), collapse = ""))
+    synthetic <- c(synthetic, alignedpep)}
+  syntheticFLAG <- append(syntheticFLAG, list(synthetic))
+  names(syntheticFLAG)[length(syntheticFLAG)] <- i
+  unalignedFLAG <- append(unalignedFLAG, list(unaligned))
+  names(unalignedFLAG)[length(unalignedFLAG)] <- i
+  write.table(synthetic, file = paste0("synthetic_9mer_FLAG", i, ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  txt_to_fasta(paste0("synthetic_9mer_FLAG", i,combined[i]))
+  write.table(unaligned, file = paste0("unaligned_synthetic_9mer_FLAG", i, ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  txt_to_fasta(paste0("unaligned_synthetic_9mer_FLAG", i,combined[i]))
+}
+
+for(i in 1:2){
+  write.table(synthetic, file = paste0("synthetic_9mer_FLAG", i, ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  write.table(unaligned, file = paste0("unaligned_synthetic_9mer_FLAG", i, ".txt"), quote = FALSE, row.names = FALSE, col.names = FALSE)
+  txt_to_fasta(paste0("synthetic_9mer_FLAG", i))
+  txt_to_fasta(paste0("unaligned_synthetic_9mer_FLAG", i))
+}
+
+#synthetic_9mer_FLAG1.fasta for F/Y
+#synthetic_9mer_FLAG2.fasta for V/I
+
+```
+
+```{r, echo=FALSE,out.width="40%", out.height="20%",fig.cap="PCA Plots for proteases (Left) and Mixtures (Right)",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("cathepsinG_synthetic-1.png","elastase_synthetic-1.png", "hPR3_synthetic-1.png"))
+```
+
+# Motif Analysis of Substrate Peptides from Mixtures
+
+To analyze distinct patterns of proteolytic activity, the significantly cleaved peptides of supernatant mixtures were assessed with dimensionalty reduction techniques PCA and UMAP. Peptides were mapped by each position based on 4 amino acid characteristics (charge, disorder, hpath, and relative molecular weight).
+
+PCA/UMAP was followed by K-Means clustering, with the average silouette width used to estimate the optimal number of clusters.
+
+Defining Amino Acid Characteristics
+
+```{r}
+AAreference <- data.frame(
+  row.names = c("A", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N", "P", "Q", "R", "S", "T", "V", "W", "Y", "X", "-"),
+  CHRG = c(0, 0, -1, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, NA, NA),
+  DISORD = c(0.0600, 0.0200, 0.1920, 0.7360, -0.6970, 0.1660, 0.3030, -0.4860, 0.5860, -0.3260, -0.3970, 0.0070, 0.9870, 0.3180, 0.1800, 0.3410, 0.0590, -0.1210, -0.8840, -0.5100, NA, NA),
+  HPATH = c(1.80, 2.50, -3.50, -3.50, 2.80, -0.40, -3.20, 4.50, -3.90, 3.80, 1.90, -3.50,  -1.60, -3.50, -4.50, -0.80, -0.70, 4.20, -0.90, -1.30, NA, NA),
+  RMW = c(15.090, 47.160, 59.100, 73.130, 91.190, 1.070, 81.160, 57.180, 72.190, 57.180, 75.210, 58.120, 41.130, 72.150, 100.200, 31.090, 45.120, 43.150, 130.230, 107.190, NA, NA),
+  NOTGAP = c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0))
+properties_df <- as.data.frame(AAreference)[, -ncol(AAreference)]
+```
+
+The subsequent code, from dataframe generation to ggseqlogo creation, was repeated for each of the 4 mixture conditions with different inhibitors.
+
+## Generation of Input Dataframe
+
+A 20 column dataframe, of 4 amino acid properties across 5 positions for each peptide, was generated. This was normalized based on columns and used as input for PCA and UMAP.
+
+```{r, eval = FALSE}
+i = 5 #i = 5-8 for mixtures
+peptides = peptideList[i]
+
+features_df <- data.frame(matrix(nrow = length(peptides), ncol = nchar(peptides[[1]][1])*ncol(properties_df)))
+colnames(features_df) <- rep(paste0(colnames(properties_df), rep(1:nchar(peptides[[1]][1]), each = ncol(properties_df))), length(peptides))
+for (k in 1:length(peptides[[1]])) {
+  rows <- data.frame(col1 = NA)
+  for (j in 1:nchar(peptides[[1]][1])){
+    amino_acid <- substr(peptides[[1]][k], j, j)
+    rows_with <- properties_df[rownames(properties_df) == amino_acid, ]
+    rows <- cbind(rows, rows_with)
+  }
+  rows <- rows[,-1]
+  colnames(rows) <- rep(paste0(colnames(properties_df), rep(1:nchar(peptides[[1]][1]), each = ncol(properties_df))), length(peptides))
+  rownames(rows) <- c(peptides[[1]][k])
+  features_df <- rbind(features_df, rows)
+}
+features_df <- features_df[-1, ]
+df.n <- clusterSim::data.Normalization(features_df, type="n1", normalization="column")
+```
+
+## PCA Analysis
+
+After silhouette Width analysis, the number of clusters for K-means clustering was adjusted. An example plot of cleaved peptides by the supernatant without inhibitors was presented, with all plots in the supplemental figures.
+
+```{r, eval = FALSE}
+pca_result <- prcomp(df.n, scale. = TRUE)
+fviz_nbclust(pca_result$x, FUNcluster=kmeans, k.max = 20, method = "silhouette")
+kmeans_result <- kmeans(pca_result$x, centers = 9) #number of centrers adjusted based on the peak average silhouette width
+df.n$PCACluster <- kmeans_result$cluster
+pca_result$cluster <- as.factor(kmeans_result$cluster)
+
+plot_pca <- plot_ly(x = pca_result$x[,1], y = pca_result$x[,2], type = 'scatter', mode = 'markers',color = pca_result$cluster, colors = rainbow(5), marker = list(size = 5))
+plot_pca
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="PCA Visualization of significantly cleaved peptides by the supernatant of activated neutrophils",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("mixturepca1.png","mixturepca2.png"))
+```
+
+## UMAP Analysis
+
+The prior analysis was repeated for UMAP. All plots were placed in the supplemental figures.
+
+```{r, eval = FALSE}
+umap_result <- umap(df.n, scale = TRUE)
+fviz_nbclust(umap_result$layout, FUNcluster=kmeans, k.max = 20, method = "silhouette")
+kmeans_result <- kmeans(umap_result$layout, centers = 4) #number of centrers adjusted based on the peak average silhouette width
+df.n$UMAPCluster <- kmeans_result$cluster
+umap_result$cluster <- as.factor(kmeans_result$cluster)
+
+plot_umap <- plot_ly(x = umap_result$layout[,1], y = umap_result$layout[,2], type = 'scatter', mode = 'markers',color = umap_result$cluster, colors = rainbow(5), marker = list(size = 5))
+plot_umap
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="UMAP Visualization of Significantly Cleaved Peptides by the supernatant of activated neutrophils",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("mixtureumap1.png","mixtureumap2.png"))
+```
+
+## Assessing Motif Logos
+
+The sequence logos for each cluster from PCA and UMAP analysis were generated
+
+```{r, eval = FALSE}
+temp <- df.n
+temp$Peptide <- row.names(df.n)
+PCAclusters <- split(temp$Peptide, temp$PCACluster)
+names(PCAclusters) <- sapply(1:length(PCAclusters), function(i) {
+  paste0(names(PCAclusters)[i], " (", length(PCAclusters[[i]]), ")")
+})
+
+PCApeptides <- unlist(PCAclusters)
+clustercol <- sub("\\s.*", "", rep(names(PCAclusters), lengths(PCAclusters)))
+PCAdf <- data.frame(Peptide = PCApeptides, Cluster = clustercol)
+write.table(PCAdf, file = paste0(combined[i],"_PCAclusters.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+```
+
+```{r, eval = FALSE}
+temp <- df.n
+temp$Peptide <- row.names(df.n)
+UMAPclusters <- split(temp$Peptide, temp$UMAPCluster)
+names(UMAPclusters) <- sapply(1:length(UMAPclusters), function(i) {
+  paste0(names(UMAPclusters)[i], " (", length(UMAPclusters[[i]]), ")")
+})
+
+UMAPpeptides <- unlist(UMAPclusters)
+clustercol <- sub("\\s.*", "", rep(names(UMAPclusters), lengths(UMAPclusters)))
+UMAPdf <- data.frame(Peptide = UMAPpeptides, Cluster = clustercol)
+write.table(UMAPdf, file = paste0(combined[i],"_UMAPclusters.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+```
+
+```{r, eval = FALSE}
+ggseqlogo(PCAclusters, ncol = 5)
+ggseqlogo(UMAPclusters, ncol = 5)
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="Clustered Motifs of Significantly Cleaved Peptides by the supernatant, from PCA (Left) and UMAP (Right) with K-means clustering",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("mixture_pcalogos.png","mixture_umaplogos.png"))
+```
+
+## Analysis between Proteases
+
+In an attempt to detect individual protease signatures within the complex mixture sample, dimensionalty reduction of PCA/UMAP was applied on the substrates of two sources, 1) pooled cleaved peptides of all three serine proteases, and 2) the mixture supernatant. Peptides from each of the three proteases were labelled by color.
+
+### Pooled Peptides of All Serine Proteases
+
+```{r, eval = FALSE}
+df <- enframe(peptideList[1:3], name = "protease", value = "peptide") %>%
+  unnest_longer(peptide)
+features_df <- data.frame(matrix(nrow = 1, ncol = 5*ncol(properties_df)))
+colnames(features_df) <- rep(paste0(colnames(properties_df), rep(1:5, each = ncol(properties_df))), 1)
+
+for (k in 1:nrow(df)) {
+  rows <- data.frame(col1 = NA)
+  for (j in 1:5){
+    amino_acid <- substr(df[k,2], j, j)
+    rows_with <- properties_df[rownames(properties_df) == amino_acid, ]
+    rows <- cbind(rows, rows_with)
+  }
+  rows <- rows[,-1]
+  colnames(rows) <- rep(paste0(colnames(properties_df), rep(1:5, each = ncol(properties_df))), 1)
+  rownames(rows) <- c(df[k,2])
+  features_df <- rbind(features_df, rows)
+}
+features_df <- features_df[-1, ]
+df.n <- clusterSim::data.Normalization(features_df, type="n1", normalization="column")
+df.n <- bind_cols(df.n, df$protease)
+colnames(df.n)[ncol(df.n)] <- "protease"
+
+pca_result <- prcomp(df.n[-ncol(df.n)], scale. = TRUE)
+umap_result <- umap(df.n[-ncol(df.n)], scale = TRUE)
+
+plot_pca <- plot_ly(x = pca_result$x[,1], y = pca_result$x[,2], type = 'scatter', mode = 'markers',color = df.n$protease, colors = rainbow(3), marker = list(size = 5))
+plot_pca
+plot_umap <- plot_ly(x = umap_result$layout[,1], y = umap_result$layout[,2], type = 'scatter', mode = 'markers',color = df.n$protease, colors = rainbow(3), marker = list(size = 5))
+plot_umap
+```
+
+```{r, echo=FALSE,out.width="30%", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("combinedpcapeptides.png","combinedumappeptides.png"))
+```
+
+### Serine Proteases within Cleaved Peptides by Neutrophil Supernatant
+
+```{r, eval = FALSE}
+cathepsinG_peptides <- intersect(peptides, peptideList[[1]])
+elastase_peptides <- intersect(peptides, peptideList[[2]])
+hPR3_peptides <- intersect(peptides, peptideList[[3]])
+other_peptides <- setdiff(peptides, union(peptideList[[1]], union(peptideList[[2]], peptideList[[3]])))
+mixture_list <- list(cathepsinG_peptides, elastase_peptides, hPR3_peptides, other_peptides)
+names(mixture_list) <- c("cathepsin G", "elastase", "hPR3", "other peptides")
+df <- enframe(mixture_list, name = "protease", value = "peptide") %>%
+  unnest_longer(peptide)
+
+features_df <- data.frame(matrix(nrow = 1, ncol = 5*ncol(properties_df)))
+colnames(features_df) <- rep(paste0(colnames(properties_df), rep(1:5, each = ncol(properties_df))), 1)
+
+for (k in 1:nrow(df)) {
+  rows <- data.frame(col1 = NA)
+  for (j in 1:5){
+    amino_acid <- substr(df[k,2], j, j)
+    rows_with <- properties_df[rownames(properties_df) == amino_acid, ]
+    rows <- cbind(rows, rows_with)
+  }
+  rows <- rows[,-1]
+  colnames(rows) <- rep(paste0(colnames(properties_df), rep(1:5, each = ncol(properties_df))), 1)
+  rownames(rows) <- c(df[k,2])
+  features_df <- rbind(features_df, rows)
+}
+features_df <- features_df[-1, ]
+df.n <- clusterSim::data.Normalization(features_df, type="n1", normalization="column")
+df.n <- bind_cols(df.n, df$protease)
+colnames(df.n)[ncol(df.n)] <- "protease"
+
+pca_result <- prcomp(df.n[-ncol(df.n)], scale. = TRUE)
+umap_result <- umap(df.n[-ncol(df.n)], scale = TRUE)
+
+plot_pca <- plot_ly(x = pca_result$x[,1], y = pca_result$x[,2], type = 'scatter', mode = 'markers',color = df.n$protease, colors = c("red", "green", "blue", 'yellow'), marker = list(size = 5))
+plot_pca
+plot_umap <- plot_ly(x = umap_result$layout[,1], y = umap_result$layout[,2], type = 'scatter', mode = 'markers',color = df.n$protease, colors = c("red", "green", "blue", 'yellow'), marker = list(size = 5))
+plot_umap
+```
+
+```{r, echo=FALSE,out.width="30%", fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("mixturepcapeptides.png","mixtureumappeptides.png"))
+```
+
+# Physiological Substrate Validation and Prediction
+
+Based on the derived proteolytic activity profile from significantly cleaved peptides, potential physiological substrates were determined in silico. Alphafold2 structures of \~18000 unique human protein products were used. The dssp program calculated secondary structure and solvent accessibility estimates for each amino acid position.
+
+The total accessibility score for each 5-mer in the protein was multiplied with the positional weight matrix of the 5-mer substrate profile, giving a 'cut-score' for each protein.
+
+To validate this approach, the MEROPs database of known substrates categorizes the cleavability of each protein by a specific protease.
+
+## Generation of a Positional Weight Matrix (PWM)
+
+The Positional Weight Matrix represented the frequencies of every amino acid in each position, in log2 space and relative to control (the unselected phage library). The frequencies of the FLAG control condition were derived from the Preliminary Analysis R markdown file. This PWM was used for subsequent validation and prediction of physiological substrates.
+
+Control Frequencies for Protease Screen: 'control_frequency_protease.txt' Control Frequencies for Mixture Screen: 'control_frequency_mixture.txt' Control Frequencies across both Screens: 'control_frequency_combined.txt'
+
+### Obtaining Amino Acid Frequency data for the Control
+
+```{r}
+control_frequency <- read.table("control_frequency_protease.txt", header = TRUE)
+rownames(control_frequency) <- control_frequency[, 1]
+control_frequency <- control_frequency[, -1]
+control_frequency <- control_frequency[rownames(control_frequency)!="X",]
+control_frequency <- control_frequency[, -ncol(control_frequency)]
+protease_control_prob <- control_frequency/colSums(control_frequency)
+
+control_frequency <- read.table("control_frequency_mixture.txt", header = TRUE)
+rownames(control_frequency) <- control_frequency[, 1]
+control_frequency <- control_frequency[, -1]
+control_frequency <- control_frequency[rownames(control_frequency)!="X",]
+control_frequency <- control_frequency[, -ncol(control_frequency)]
+mixture_control_prob <- control_frequency/colSums(control_frequency)
+```
+
+### Generation of PWM for Significantly Cleaved Peptides (unaligned, 5-mers)
+
+```{r}
+for (i in 1:length(combined)){
+  sequences = peptideList[[i]]
+  if(combined[i] %in% unlist(proteases)){
+    control_prob <- protease_control_prob}
+  else{control_prob <- mixture_control_prob}
+  
+  AA_counts <- as.data.frame(matrix(nrow=nchar(length(sequences[1])), ncol=20))
+  colnames(AA_counts)<-AA
+  for (j in 1:nchar(sequences[i])) {
+    temp <- substr(sequences, j, j)
+    peptideNames <- AA %>%  unique() %>%data.frame(stringsAsFactors = F)
+    colnames(peptideNames) <- "peptideNames"
+    result<-apply(peptideNames,1,function(x) str_count(temp, x["peptideNames"]))
+    colnames(result) <- peptideNames$peptideNames
+    result<-result[, AA]
+    for (k in 1:20) {
+      AA_counts[j,k] <- sum(result[,k])
+    }
+  }
+  AA_counts$total <- apply(AA_counts, 1, sum)
+  PPM <- AA_counts/AA_counts$total #position probability matrix 
+  PPM <- PPM[,1:20]
+  PPM <- PPM %>% t() %>% as.data.frame()
+  colnames(PPM) <- as.character(1:nchar(sequences[1]))
+
+  pwm <- log2((PPM/control_prob))
+  colnames(pwm) <- as.character(1:nchar(sequences[1]))
+  pwm_output <- t(pwm)
+  pwm_output <- replace(pwm_output, is.infinite(pwm_output), 0)
+  write.table(pwm_output, file = paste0(combined[i], '_pwm.txt'), sep = "\t", row.names = FALSE)
+}
+```
+
+Example PWM for AEBSF+EDTA Mixture Condition
+
+```{r}
+pwm_output
+```
+
+### Generation of PWM for Significantly Cleaved Peptides (aligned with DECIPHER, 9-mers)
+
+```{r}
+protease_9control_prob <- matrix(rep(rowMeans(protease_control_prob, na.rm = TRUE), each = 9), ncol = 9, byrow = TRUE)
+mixture_9control_prob <- matrix(rep(rowMeans(mixture_control_prob, na.rm = TRUE), each = 9), ncol = 9, byrow = TRUE)
+
+for (i in 1:length(combined)){
+  sequences = alignedpeptideList[[i]]
+  if(combined[i] %in% unlist(proteases)){
+    control_prob <- protease_9control_prob
+  }
+  else{control_prob <- mixture_9control_prob}
+  AA_counts <- as.data.frame(matrix(nrow=nchar(length(sequences[1])), ncol=20))
+  colnames(AA_counts)<-AA
+  for (j in 1:nchar(sequences[i])) {
+    temp <- substr(sequences, j, j)
+    peptideNames <- AA %>%  unique() %>%data.frame(stringsAsFactors = F)
+    colnames(peptideNames) <- "peptideNames"
+    result<-apply(peptideNames,1,function(x) str_count(temp, x["peptideNames"]))
+    colnames(result) <- peptideNames$peptideNames
+    result<-result[, AA]
+    for (k in 1:20) {
+      AA_counts[j,k] <- sum(result[,k])
+    }
+  }
+  AA_counts$total <- apply(AA_counts, 1, sum)
+  PPM <- AA_counts/AA_counts$total
+  PPM <- PPM[,1:20]
+  PPM <- PPM %>% t() %>% as.data.frame()
+  colnames(PPM) <- as.character(1:nchar(sequences[1]))
+
+  pwm <- log2((PPM/control_prob))
+  colnames(pwm) <- as.character(1:nchar(sequences[1]))
+  pwm_output <- t(pwm)
+  pwm_output <- replace(pwm_output, is.infinite(pwm_output), 0)
+  write.table(pwm_output, file = paste0(combined[i], '_aligned_pwm.txt'), sep = "\t", row.names = FALSE)
+}
+```
+
+## Alphafold2 Testing of Proteins
+
+Applying this generated PWM,
+
+```{r}
+#Alphafold Script etc.
+
+```
+
+# Protease Mixture Deconvolution with CibersortX and EPIC
+
+Based on prior analyses, peptide profiles were identified to broadly capture the proteolytic signatures of different proteases and mixture conditions. However, major challenges remain in deconvolution and differentiating proteases within mixtures objectively.
+
+Drawing upon developed Bulk RNA-seq Deconvolution methods, the peptide dataset of proteases and mixtures were applied towards this purpose. To ensure robustness, 2 different algorithms CibersortX and EPIC, were used.
+
+<https://cibersortx.stanford.edu/> <https://epic.gfellerlab.org/>
+
+A comprehensive protease reference profile was constructed, using the normalized counts of all cleaved peptides in each protease condition. This profile was directly applied towards analyzing the separate mixture dataset of activated neutrophils, determining estimates of proteolytic activity levels for each protease.
+
+Reference Profile 1) 3 neutrophil serine proteases, 2 phage controls, ADAMTS13, thrombin
+
+The protease profile consisted of cleaved/released phages in 7 conditions: 3 neutrophil serine proteases (cathepsin G, elastase, hPR3), no protease (baseline phage release), FLAG peptide elution (unselected phage library), and 2 blood proteases (ADAMTS13, thrombin).
+
+The 2 phage controls were included as a reference for phage library background and noise. The 2 blood proteases were included to provide a control against false signals, since both have no expected activity/presence in neutrophil supernatants.
+
+Data for ADAMTS13 and thrombin were sourced from a 6-mer NNK phage display library with a similar composition by Kretz et al., 2018, with 6-mers split into 5-mers for the current analysis.
+
+<https://www.nature.com/articles/s41598-018-21021-9>
+
+## Deconvolution: Generation of Protease Reference Profile
+
+A protease reference profile was constructed based on DESeq2-normalized counts of cleaved peptides across the 7 conditions. Counts data from neutrophil proteases, phage controls and ADAMTS13/thrombin were merged and subsequently normalized via DESeq2.
+
+Standard settings were used, with quantile normalization and a barcode peptide range of 2000-3000 per condition applied for generating the protease signature matrix in CibersortX. B-mode batch correction was enabled in CibersortX when thrombin and ADAMTS13 were tested for correction.
+
+```{r, eval = FALSE}
+#Reference Profile 1
+ADAMTS13_thrombin <- read.csv("ADAMTS13_thrombin_5mer_data.csv", header=TRUE,row.names=1)
+ADAMTS13_thrombin$peptide <- rownames(ADAMTS13_thrombin)
+mergedData <- protease_counts
+mergedData$peptide <- rownames(mergedData)
+mergedData <- merge(mergedData, ADAMTS13_thrombin, by = "peptide", all = TRUE)
+mergedData[is.na(mergedData)] <- 0
+rownames(mergedData) <- mergedData$peptide
+mergedData <- mergedData[, -1]
+
+ADAMTS13_thrombin_conditions = c("cathepsin G","elastase","hPR3","no protease", "ADAMTS13", "thrombin")
+ADAMTS13_thrombin_replicates = c("C1", "C2", "C3", "E1", "E2", "E3", "H1", "H2", "H3", "V1", "V2", "V3", "N1", "N2", "N3", "AD1", "AD2", "AD3", "AD4", "T1", "T2", "T3", "T4")
+ADAMTS13_thrombin_col = c("cathepsin G","cathepsin G","cathepsin G", "elastase","elastase","elastase","hPR3","hPR3","hPR3","no protease", "no protease", "no protease", "FLAG","FLAG","FLAG", "ADAMTS13", "ADAMTS13", "ADAMTS13", "ADAMTS13", "thrombin", "thrombin", "thrombin", "thrombin")
+ADAMTS13_thrombin_colname = c("cathepsin G 1","cathepsin G 2","cathepsin G 3","elastase 1","elastase 2","elastase 3","hPR3 1","hPR3 2","hPR3 3","no protease 1", "no protease 2", "no protease 3", "FLAG 1","FLAG 2","FLAG 3", "ADAMTS13 1", "ADAMTS13 2", "ADAMTS13 3", "ADAMTS13 4", "thrombin 1", "thrombin 2", "thrombin 3", "thrombin 4")
+control = "FLAG"
+
+data_NS <- subset(mergedData, grepl("X", row.names(mergedData))==FALSE)
+countData <- as.matrix(data_NS)
+colData <- data.frame(condition=factor(ADAMTS13_thrombin_col))
+dds=DESeqDataSetFromMatrix(countData, colData, formula(~ condition))
+dds$condition <- relevel(dds$condition, ref = "FLAG")
+keep <- rowSums(counts(dds)) >= 10
+dds_ADAMTS13_thrombin <- dds[keep,]
+dds_ADAMTS13_thrombin=DESeq(dds_ADAMTS13_thrombin)
+saveRDS(dds_ADAMTS13_thrombin, file = paste0("ADAMTS13_thrombin_dds_object.rds"))
+```
+
+```{r, include=FALSE}
+dds_ADAMTS13_thrombin <- readRDS(paste0("ADAMTS13_thrombin_dds_object.rds"))
+```
+
+ADAMTS13_thrombin
+
+## Deconvolution: Protease Counts Data Preparation
+
+Following DESeq2 Counts Normalization, input data for CibersortX and EPIC was prepared and formatted. Due to memory limitations on processing by EPIC/CibersortX, a row sum filter of 140 was applied to remove low count peptides, taking out 16.5% peptides.
+
+```{r, eval = FALSE}
+ADAMTS13_thrombin_matrix <- as.data.frame(counts(dds_ADAMTS13_thrombin, normalized = TRUE, replaced = FALSE))
+row_names <- as.list(rownames(ADAMTS13_thrombin_matrix))
+ADAMTS13_thrombin_matrix$condition <- row_names
+ADAMTS13_thrombin_matrix <- ADAMTS13_thrombin_matrix[, c(ncol(ADAMTS13_thrombin_matrix), 1:(ncol(ADAMTS13_thrombin_matrix)-1))]
+colnames(ADAMTS13_thrombin_matrix) <- c("peptide", as.list(ADAMTS13_thrombin_col))
+nrow(ADAMTS13_counts)
+
+ADAMTS13_counts <- as.data.frame(counts(dds_ADAMTS13_thrombin, replaced = FALSE))
+ADAMTS13_counts <- ADAMTS13_counts[apply(ADAMTS13_counts, 1, function(row) sum(row) < 140), ]
+ADAMTS13_thrombin_matrix <- ADAMTS13_thrombin_matrix[!rownames(ADAMTS13_thrombin_matrix) %in% rownames(ADAMTS13_counts), ]
+ADAMTS13_thrombin_matrix <- as.matrix(ADAMTS13_thrombin_matrix)
+write.table(ADAMTS13_thrombin_matrix, file = paste0("filtered_protease_ref_ADAMTS13_thrombin.txt"), sep = "\t", row.names = FALSE)
+```
+
+### Deconvolution: Mixture Counts Data Preparation
+
+The bulk mixture dataset, which consists of the activated neutrophil supernatant across different conditions, was generated based on normalized cleaved peptide counts. Due to memory limitations on processing by EPIC/CibersortX, a row sum filter of 30 was applied.
+
+```{r, eval = FALSE}
+#Bulk Mixture Profile
+mixture_matrix <- as.data.frame(counts(dds_mixture, normalized = TRUE, replaced = FALSE))
+row_names <- as.list(rownames(mixture_matrix))
+mixture_matrix$condition <- row_names
+mixture_matrix <- mixture_matrix[, c(ncol(mixture_matrix), 1:(ncol(mixture_matrix)-1))]
+colnames(mixture_matrix) <- c("peptide", as.list(mixture_col))
+mixture_matrix <- as.matrix(mixture_matrix)
+write.table(mixture_matrix, file = paste0("supernatant_mixture.txt"), sep = "\t", row.names = FALSE)
+
+lowcounts <- as.data.frame(counts(dds_mixture, replaced = FALSE))
+lowcounts <- lowcounts[apply(lowcounts, 1, function(row) sum(row) < 30), ]
+mixture_matrix_filtered <- mixture_matrix[!rownames(mixture_matrix) %in% rownames(lowcounts), ]
+mixture_matrix_filtered <- as.matrix(mixture_matrix_filtered)
+write.table(mixture_matrix_filtered, file = paste0("filtered_supernatant_mixture.txt"), sep = "\t", row.names = FALSE)
+```
+
+## Deconvolution of the Neutrophil Supernatant Mixture
+
+```{r, echo = FALSE}
+cibersort_absolute_ADAMThrombin <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(0.139, 0.201, 0.221, 0.005, 0.007, 0.026, 0.248, 0.151, 0.231, 0.007, 0.031, 0.019, 0.213, 0.212, 0.199),
+  elastase = c(3.579, 3.521, 3.368, 0.015, 0.021, 0.024, 3.424, 3.662, 3.174, 0.011, 0.03, 0.045, 0.08, 0.082, 0.075),
+  hPR3 = c(0.696, 0.69, 0.724, 0.557, 0.557, 0.625, 0.773, 0.895, 0.924, 0.59, 0.579, 0.439, 0, 0, 0),
+  no_protease = c(0, 0, 0, 2.162, 2.049, 2.151, 0, 0, 0, 2.341, 2.047, 1.956, 0.569, 0.605, 0.584),
+  FLAG_peptide = c(2.384, 2.322, 2.345, 2.735, 2.788, 2.647, 2.232, 2.167, 2.284, 2.146, 2.777, 2.769, 4.448, 4.369, 4.448),
+  ADAMTS13 = c(0, 0, 0, 0.01, 0.01, 0.007, 0, 0, 0, 0.013, 0.008, 0.007, 0, 0, 0),
+  thrombin = c(0.034, 0.039, 0.038, 0.003, 0.006, 0.009, 0.032, 0.026, 0.035, 0.003, 0.011, 0.016, 0.003, 0.003, 0.003))
+
+cibersort_percentage_ADAMThrombin <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(2.03454, 2.96767, 3.30048, 0.09112, 0.12872, 0.47367, 3.69653, 2.18809, 3.47473, 0.13696, 0.56538, 0.36184, 4.00903, 4.02201, 3.74835),
+  elastase = c(52.38583, 51.98583, 50.29869, 0.27337, 0.38617, 0.43724, 51.03592, 53.06477, 47.74368, 0.21522, 0.54715, 0.85698, 1.50574, 1.55568, 1.41270),
+  hPR3 = c(10.18735, 10.18751, 10.81243, 10.15127, 10.24274, 11.38641, 11.52184, 12.96913, 13.89892, 11.54373, 10.55991, 8.36031, 0.00000, 0.00000, 0.00000),
+  no_protease = c(0.00000, 0.00000, 0.00000, 39.40222, 37.67929, 39.18747, 0.00000, 0.00000, 0.00000, 45.80317, 37.33358, 37.25005, 10.70958, 11.47790, 11.00019),
+  FLAG_peptide = c(34.89461, 34.28318, 35.02091, 49.84509, 51.26885, 48.22372, 33.26874, 31.40125, 34.35620, 41.98787, 50.64746, 52.73281, 83.71918, 82.88750, 83.78226),
+  ADAMTS13 = c(0.00000, 0.00000, 0.00000, 0.18225, 0.18389, 0.12753, 0.00000, 0.00000, 0.00000, 0.25435, 0.14591, 0.13331, 0.00000, 0.00000, 0.00000),
+  thrombin = c(0.49766, 0.57582, 0.56750, 0.05467, 0.11033, 0.16396, 0.47697, 0.37676, 0.52647, 0.05870, 0.20062, 0.30470, 0.05647, 0.05692, 0.05651))
+
+epic_percentage_ADAMThrombin <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(3.18, 3.32, 2.42, 0.00, 0.00, 0.00, 1.62, 1.83, 3.47, 0.00, 0.00, 0.00, 0.59, 0.66, 0.47),
+  elastase = c(55.01, 57.98, 57.05, 0.01, 0.00, 0.00, 58.47, 63.18, 54.72, 0.00, 0.00, 0.01, 0.06, 0.06, 0.09),
+  hPR3 = c(11.65, 1.45, 8.65, 21.94, 30.03, 31.93, 10.78, 19.15, 12.55, 28.93, 28.40, 28.73, 4.82, 6.81, 9.24),
+  no_protease = c(15.28, 14.50, 23.80, 48.10, 42.10, 40.37, 17.57, 3.58, 16.20, 56.03, 47.93, 41.23, 1.66, 0.19, 0.03),
+  FLAG_peptide = c(14.36, 22.30, 7.94, 28.74, 26.95, 26.48, 11.45, 12.21, 12.68, 14.13, 22.74, 29.03, 88.95, 88.16, 86.29),
+  ADAMTS13 = c(0.17, 0.08, 0.04, 0.57, 0.43, 0.59, 0.10, 0.01, 0.27, 0.36, 0.57, 0.41, 0.82, 0.81, 0.96),
+  thrombin = c(0.35, 0.36, 0.10, 0.17, 0.08, 0.13, 0.01, 0.05, 0.11, 0.19, 0.09, 0.19, 0.24, 0.32, 0.22),
+  other = c(0.00, 0.00, 0.00, 0.48, 0.42, 0.49, 0.00, 0.00, 0.00, 0.35, 0.27, 0.40, 2.86, 2.98, 2.69))
+```
+
+## Deconvolution Results from CibersortX
+
+For CibersortX, a protease signature matrix was first created based on the reference profile, independently from mixture data. This matrix extracted signature peptides that characterize the presence of tested proteases/conditions.
+
+### Parameters for Creation of the Protease Signature Matrix: ('Signature Matrix Creation')
+
+Default (kappa = 999, q-value = 0.01, sampling = 0.5, min expression = 1)
+
+Quantile Normalization enabled
+
+Min-Max Barcode Peptides per Condition: adjusted for experiment complexity (2000-3000)
+
+This signature matrix was applied towards the bulk mixture to analyze protease composition within each neutrophil supernatant.
+
+### Parameters for Mixture Deconvolution: ('Impute Cell Fractions, Absolute Mode)
+
+Default (batch correction disabled, quantile normalization disabled, permutations = 1)
+
+```{r, echo=FALSE,out.width="30%",fig.cap="CibersortX MEROPs Results",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("ADAMTHR_cibersortref.png","ADAMTHR_cibersort1.png","ADAMTHR_cibersort2.png"))
+```
+
+Total Peptides included in the Protease Signature Matrix: 11221
+
+## Deconvolution Results from EPIC
+
+In contrast to CibersortX, EPIC does not require the prior generation of a specific signature matrix. The protease reference profile, of normalized cleaved peptides, was used directly for deconvolution analysis onto the mixture reference profile.
+
+A signature peptide list for EPIC's analyses was obtained from the intersection between protease and mixture peptides (138224 peptides).
+
+```{r, eval=FALSE}
+ADAMTS13_thrombin_common_peptides <- intersect(rownames(ADAMTS13_thrombin_matrix), rownames(mixture_matrix_filtered))
+write.table(ADAMTS13_thrombin_common_peptides, file="ADAMTS13_thrombin_signature_peptides.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+supernatant <- read.table(file = "filtered_supernatant_mixture.txt", header=TRUE,row.names=1)
+reference_ADAMThrombin <- read.table(file = "filtered_protease_ref_ADAMTS13_thrombin.txt", header=TRUE,row.names=1)
+immunedeconv::deconvolute_epic_custom(
+  supernatant,
+  reference_ADAMThrombin,
+  ADAMTS13_thrombin_common_peptides,
+  genes_var = NULL,
+  mrna_quantities = NULL)
+```
+
+```{r, echo=FALSE,out.width="20%", out.height="20%",fig.cap="EPIC MEROPs results",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("ADAMTHR_epic1.png","ADAMTHR_epic2.png", "ADAMTHR_epic3.png"))
+```
+
+# Data from CibersortX Results
+
+CibersortX estimates of proteolytic activity levels across mixture conditions were visualized with barplots and heatmaps. Relative percentages depicted activity as part of 100%, while absolute scores depicted unstandardized levels of activity/presence.
+
+## CibersortX: Generation of Figures for Percentages
+
+```{r, echo = FALSE, warning = FALSE, out.width="40%"}
+percentage_data <- cibersort_percentage_ADAMThrombin %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## CibersortX: Generation of Figures for Absolute Scores
+
+```{r, echo = FALSE, warning = FALSE, out.width="40%"}
+absolute_data <- cibersort_absolute_ADAMThrombin %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+barplot_data <- reshape2::melt(absolute_data, id.vars = "Condition")
+rownames(absolute_data) <- absolute_data[, 1]
+pheatmap(absolute_data[,-1], display_numbers = TRUE)
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- cibersort_absolute_ADAMThrombin %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "Absolute_Score")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels =c("cathepsin_G", "elastase", "hPR3", "no_protease",  "FLAG_peptide", "ADAMTS13", "thrombin")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "absolute scores", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+Statistical comparisons using a Kruskal-Wallis test for differences and 2-sample t-test between conditions was performed for the absolute scores. Results were visualized with boxplots.
+
+```{r, out.width="40%", warning = FALSE}
+conditions <- c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide", "ADAMTS13", "thrombin")
+names = c("cathepsin G", "elastase",  "hPR3", "no protease", "FLAG peptide", "ADAMTS13", "thrombin")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale = c(0.5, 5, 2, 4, 6, 1, 0.5) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <- ggboxplot(cibersort_absolute_ADAMThrombin, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("absolute scores for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Data from EPIC Results
+
+EPIC estimates of proteolytic activity levels across mixture conditions were visualized with barplots and heatmaps. Relative percentages depicted activity as part of 100%. Absolute scores were not reported by EPIC.
+
+## EPIC: Generation of Figures for Percentages
+
+```{r, echo = FALSE, warning = FALSE, out.width="40%"}
+percentage_data <- epic_percentage_ADAMThrombin %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- epic_percentage_ADAMThrombin %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "percentage")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease",  "FLAG_peptide", "ADAMTS13", "thrombin", "other")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = percentage, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "relative percentages", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+Statistical comparisons using a Kruskal-Wallis test for differences and 2-sample t-test between conditions was performed for the percentages.
+
+```{r, out.width="40%", warning = FALSE}
+conditions <- c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide", "ADAMTS13", "thrombin", "other")
+names = c("cathepsin G", "elastase","hPR3","no protease", "FLAG peptide", "ADAMTS13", "thrombin", "other")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale = c(5, 90, 60, 70, 80, 5, 5, 5) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <- ggboxplot(epic_percentage_ADAMThrombin, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("absolute scores for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Repeated Deconvolution Analyses with different protease references
+
+To test the robustness of the algorithms and obtained deconvolution estimates, CibersortX and EPIC were repeated with different protease reference profiles. Due to concerns specified in the manuscript, a trial was conducted with hPR3 excluded.
+
+Reference Profile 2) 3 neutrophil serine proteases, 2 phage controls Reference Profile 3) cathepsin G, elastase, 2 phage controls (without hPR3)
+
+## Deconvolution: Protease Reference Matrix
+
+A protease reference profile of the 3 neutrophil serine proteases and 2 phage controls was constructed. This was used as input for CibersortX to construct the protease signature matrix.
+
+### CibersortX Parameters for Protease Signature Matrix:
+
+Default (kappa = 999, q-value = 0.01, sampling = 0.5, min expression = 1)
+
+Quantile Normalization enabled
+
+Min-Max Barcode Peptides per Condition: adjusted for experiment complexity (500-1000 for all proteases, 2000-3000 without hPR3)
+
+```{r, eval = FALSE}
+#Reference Profile 2
+protease_matrix <- as.data.frame(counts(dds_protease, normalized = TRUE, replaced = FALSE))
+row_names <- as.list(rownames(protease_matrix))
+protease_matrix$condition <- row_names
+protease_matrix <- protease_matrix[, c(ncol(protease_matrix), 1:(ncol(protease_matrix)-1))]
+colnames(protease_matrix) <- c("peptide", as.list(protease_col))
+protease_matrix <- as.matrix(protease_matrix)
+write.table(protease_matrix, file = paste0("protease_ref.txt"), sep = "\t", row.names = FALSE)
+```
+
+```{r, eval = FALSE}
+#Reference Profile 3
+protease_matrix_nohPR3 <- protease_matrix[, !grepl("^hPR3", colnames(protease_matrix))]
+protease_matrix_nohPR3 <- as.matrix(protease_matrix_nohPR3)
+write.table(protease_matrix_nohPR3, file = paste0("protease_ref_hPR3_excluded.txt"), sep = "\t", row.names = FALSE)
+```
+
+Total Peptides included in Signature Matrix: 6259 (All proteases), 6166 (hPR3 excluded)
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="protease Signature Matrices without (left) and with (right) the inclusion of hPR3",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("referencenohPR3.png","referencewithhPR3.png"))
+```
+
+### CibersortX Parameters for Mixture Deconvolution:
+
+Protease composition analysis was based on default parameters: Default (Batch Correction disabled, Quantile Normalization disabled, Permutations = 1)
+
+```{r, echo=FALSE,out.width="30%", out.height="50%",fig.cap="protease Percentages (left) and absolute scores (right) for all proteases" ,fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("hpr3cibersortplot.png", "mixturetable_withhPR3.png"))
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="50%",fig.cap="protease Percentages (left) and absolute scores (right) for proteases with hPR3 excluded" ,fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("mixturetable_withouthPR3.png","nohpr3cibersortplot.png"))
+```
+
+### EPIC Parameters for Protease Reference and Deconvolution:
+
+A signature peptide list for EPIC's analyses was obtained from the intersection between protease and mixture peptides (203974 peptides).
+
+Due to memory limitations on processing by EPIC , a row sum filter of 30 was applied.
+
+```{r, eval = FALSE}
+lowcounts <- as.data.frame(counts(dds_protease, replaced = FALSE))
+lowcounts <- lowcounts[apply(lowcounts, 1, function(row) sum(row) < 30), ]
+matrix_filtered <- protease_matrix[!rownames(protease_matrix) %in% rownames(lowcounts), ]
+matrix_filtered <- as.matrix(matrix_filtered)
+
+matrix_filtered_nohPR3 <- matrix_filtered[, !grepl("^hPR3", colnames(matrix_filtered))]
+matrix_filtered_nohPR3 <- as.matrix(matrix_filtered_nohPR3)
+write.table(matrix_filtered, file = paste0("filtered_protease_ref.txt"), sep = "\t", row.names = FALSE)
+write.table(matrix_filtered_nohPR3, file = paste0("filtered_protease_ref_nohPR3.txt"), sep = "\t", row.names = FALSE)
+
+common_peptides <- intersect(rownames(matrix_filtered), rownames(mixture_matrix_filtered))
+write.table(common_peptides, file="signature_peptides.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="EPIC Results with all proteases",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("hpr3EPIC1.png","hpr3EPIC2.png", "hpr3EPIC3.png"))
+```
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="EPIC Results without hPR3",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("nohpr3EPIC1.png","nohpr3EPIC2.png", "nohpr3EPIC3.png"))
+```
+
+# Data from CibersortX Results: all neutrophil serine proteases (profile 2)
+
+To examine the estimated protease % composition and absolute presence score across mixture conditions from CibersortX, barplots and heatmaps were generated.
+
+```{r, echo=FALSE}
+cibersort_percentage <- data.frame(Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(3.85557, 4.72549, 5.29467, 3.81519, 3.65218, 3.78503, 5.14493, 3.62096, 5.55526, 0.20398, 4.65756, 4.37186, 7.60112, 6.70607, 7.71151),
+  elastase = c(49.68398, 54.04571, 49.68922, 0.35784, 0.96528, 0.51495, 49.48392, 54.04448, 50.48303, 0.07544, 1.42846, 3.00531, 3.41970, 2.46910, 3.38201),
+  hPR3 = c(12.09770, 5.17116, 10.84641, 7.99084, 10.70531, 9.24822, 9.42559, 10.69585, 10.86766, 0.47502, 5.72170, 2.20243, 0.00000, 0.00000, 0.00000),
+  no_protease = c(6.98148, 7.80356, 6.40044, 35.31021, 32.99130, 34.26652, 7.33651, 6.61425, 5.12848, 43.62077, 30.43273, 26.75355, 14.08647, 15.14777, 15.95179),
+  FLAG_peptide = c(27.38126, 28.25408, 27.76927, 52.52592, 51.68593, 52.18528, 28.60905, 25.02447, 27.96557, 55.62479, 57.75955, 63.66686, 74.89272, 75.67706, 72.95469))
+
+cibersort_absolute <- data.frame(Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(2.251, 2.725, 3.007, 1.45, 1.381, 1.448, 2.911, 2.146, 3.111, 0.073, 1.777, 1.59, 2.834, 2.496, 2.873),
+  elastase = c(29.007, 31.166, 28.22, 0.136, 0.365, 0.197, 27.998, 32.03, 28.271, 0.027, 0.545, 1.093, 1.275, 0.919, 1.26),
+  hPR3 = c(7.063, 2.982, 6.16, 3.037, 4.048, 3.538, 5.333, 6.339, 6.086, 0.17, 2.183, 0.801, 0, 0, 0),
+  no_protease = c(4.076, 4.5, 3.635, 13.42, 12.475, 13.109, 4.151, 3.92, 2.872, 15.611, 11.611, 9.73, 5.252, 5.638, 5.943),
+  FLAG_peptide = c(15.986, 16.293, 15.771, 19.963, 19.544, 19.964, 16.187, 14.831, 15.661, 19.907, 22.037, 23.155, 27.923, 28.167, 27.18))
+
+cibersort_percentage_nohPR3 <- data.frame(Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(7.67730, 7.75541, 8.30981, 4.34157, 4.86002, 4.03193, 7.95396, 7.39562, 8.49743, 3.61280, 5.45671, 4.36149, 5.56287, 5.46217, 5.31834),
+  elastase = c(60.55741, 58.93220, 58.27410, 6.57868, 6.75218, 6.41106, 62.15938, 63.57576, 59.37343, 13.17004, 8.31071, 9.41760, 3.75616, 5.31872, 5.15291),
+  no_protease = c(0.00000, 0.00000, 0.00000, 32.17843, 32.25990, 34.49292, 0.00000, 0.00000, 0.00000, 21.57618, 24.08400, 20.68045, 11.39785, 6.16595, 5.80122),
+  FLAG_peptide = c(31.76529, 33.31239, 33.41609, 56.90132, 56.12790, 55.06409, 29.88666, 29.02862, 32.12913, 61.64098, 62.14858, 65.54046, 79.28312, 83.05316, 83.72753))
+
+cibersort_absolute_nohPR3 <- data.frame(Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(6.848, 6.788, 7.096, 1.931, 2.137, 1.793, 6.807, 6.69, 7.12, 1.472, 2.432, 1.846, 2.494, 2.437, 2.379),
+  elastase = c(54.016, 51.581, 49.762, 2.926, 2.969, 2.851, 53.196, 57.51, 49.749, 5.366, 3.704, 3.986, 1.684, 2.373, 2.305),
+  no_protease = c(0, 0, 0, 14.312, 14.185, 15.339, 0, 0, 0, 8.791, 10.734, 8.753, 5.11, 2.751, 2.595),
+  FLAG_peptide = c(28.334, 29.157, 28.535, 25.308, 24.68, 24.487, 25.577, 26.259, 26.921, 25.115, 27.699, 27.74, 35.545, 37.055, 37.453))
+```
+
+## CibersortX: Generation of Figures for Percentages
+
+```{r, out.width="30%"}
+percentage_data <- cibersort_percentage %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+## CibersortX: Generation of Figures for Absolute Scores
+
+```{r, warning = FALSE, out.width="30%"}
+absolute_data <- cibersort_absolute %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+barplot_data <- reshape2::melt(absolute_data, id.vars = "Condition")
+rownames(absolute_data) <- absolute_data[, 1]
+pheatmap(absolute_data[,-1], display_numbers = TRUE)
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- cibersort_absolute %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "Absolute_Score")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "absolute scores", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+```{r, out.width="30%", warning = FALSE}
+conditions <- c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide")
+names = c("cathepsin G", "elastase", "hPR3", "no protease", "FLAG peptide")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale = c(5, 45, 10, 25, 35) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <- ggboxplot(cibersort_absolute, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("absolute scores for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Data from EPIC Results: all neutrophil serine proteases (profile 2)
+
+To examine the estimated protease % composition and absolute presence score across mixture conditions from CibersortX, barplots and heatmaps were generated.
+
+```{r, echo=FALSE}
+epic_percentage <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(0.660, 1.810, 2.150, 0.000, 0.000, 0.000, 2.120, 3.120, 1.430, 0.010, 0.000, 0.010, 0.500, 0.680, 0.420),
+  elastase = c(64.910, 62.330, 61.560, 0.000, 0.000, 0.010, 62.420, 54.150, 59.260, 0.000, 0.010, 0.000, 0.190, 0.120, 0.060),
+  hPR3 = c(4.130, 5.250, 4.930, 19.230, 19.110, 21.730, 3.710, 22.840, 11.580, 19.310, 17.720, 22.460, 0.040, 0.000, 0.160),
+  no_protease = c(2.510, 1.530, 0.770, 57.740, 62.620, 59.970, 2.070, 8.130, 1.180, 73.830, 67.350, 56.050, 0.020, 0.120, 0.060),
+  FLAG_peptide = c(27.800, 29.090, 30.590, 21.570, 17.100, 16.990, 29.680, 11.750, 26.530, 5.680, 13.710, 20.270, 95.360, 94.910, 95.360),
+  other = c(0.000, 0.000, 0.000, 1.440, 1.170, 1.310, 0.000, 0.000, 0.000, 1.160, 1.190, 1.210, 3.890, 4.160, 3.930))
+
+epic_percentage_nohPR3 <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(0.480, 2.340, 2.260, 0.010, 0.000, 0.000, 2.150, 1.570, 2.380, 0.000, 0.000, 0.000, 0.490, 0.540, 0.390),
+  elastase = c(65.850, 64.170, 62.260, 0.000, 0.010, 0.000, 62.740, 66.240, 59.610, 0.000, 0.000, 0.010, 0.050, 0.000, 0.040),
+  no_protease = c(2.270, 2.630, 3.330, 81.700, 84.280, 89.360, 1.580, 9.470, 7.390, 96.490, 89.310, 82.590, 0.000, 0.020, 0.020),
+  FLAG_peptide = c(31.380, 30.840, 32.140, 16.720, 14.460, 9.180, 33.540, 22.710, 30.620, 2.290, 9.410, 16.120, 95.620, 95.430, 95.640),
+  other = c(0.000, 0.000, 0.000, 1.550, 1.250, 1.450, 0.000, 0.000, 0.000, 1.210, 1.280, 1.280, 3.830, 4.020, 3.890))
+```
+
+## EPIC: Generation of Figures for Percentages
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- epic_percentage %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- epic_percentage %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "percentage")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide", "other")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = percentage, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "relative percentages", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+```{r, out.width="30%", echo = FALSE}
+conditions <- c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide", "other")
+names = c("cathepsin G", "elastase", "hPR3", "no protease", "FLAG peptide", "other")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale =  c(5, 90, 40, 100, 130, 6) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <- ggboxplot(epic_percentage, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("relative percentages for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Data from CibersortX Results: cathepsin G and elastase (profile 3)
+
+Analyses from previously were repeated.
+
+## CibersortX: Generation of Figures for Percentages
+
+```{r, out.width="30%"}
+percentage_data <- cibersort_percentage_nohPR3 %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## CibersortX: Generation of Figures for Absolute Scores
+
+```{r, warning = FALSE, out.width="30%"}
+absolute_data <- cibersort_absolute_nohPR3 %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+barplot_data <- reshape2::melt(absolute_data, id.vars = "Condition")
+rownames(absolute_data) <- absolute_data[, 1]
+pheatmap(absolute_data[,-1], display_numbers = TRUE)
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- cibersort_absolute_nohPR3 %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "Absolute_Score")
+barplot_data <- barplot_data %>% 
+  mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "no_protease", "FLAG_peptide")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "absolute scores", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+```{r, out.width="30%", warning = FALSE}
+conditions <- c("cathepsin_G", "elastase", "no_protease", "FLAG_peptide")
+names = c("cathepsin G", "elastase","no protease", "FLAG peptide")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale = c(10, 80, 25, 45) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <-ggboxplot(cibersort_absolute_nohPR3, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("absolute scores for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Data from EPIC Results: cathepsin G and elastase (profile 3)
+
+To examine the estimated protease % composition and absolute presence score across mixture conditions from CibersortX, barplots and heatmaps were generated.
+
+## EPIC: Generation of Figures for Percentages
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- epic_percentage_nohPR3 %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- epic_percentage_nohPR3 %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "percentage")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "no_protease", "FLAG_peptide", "other")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = percentage, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "relative percentages", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+### Statistical Comparisons
+
+```{r, out.width="30%", echo = FALSE}
+conditions <- c("cathepsin_G", "elastase", "no_protease", "FLAG_peptide", "other")
+names = c("cathepsin G", "elastase", "no protease", "FLAG peptide", "other")
+condition_comparisons <- list( c("no inhibitor", "AEBSF"), c("no inhibitor", "AEBSF+EDTA"), c("no inhibitor", "FLAG control") )
+graph_scale =  c(4, 90, 130, 130, 6) #scale graph to fit y-axis
+
+for(i in 1:length(conditions)){
+  box_plot <- ggboxplot(epic_percentage_nohPR3, x = "Condition", y = conditions[i], add = "jitter") + 
+  labs(x = "supernatant condition", y = paste0("relative percentages for ", names[i])) +
+  stat_compare_means(comparisons = condition_comparisons, method = "t.test") + 
+  stat_compare_means(label.y = graph_scale[i])    
+  show(box_plot)
+}
+```
+
+# Comparison to MEROPs Database
+
+The MEROPs database consists of known substrates for individual proteases, like neutrophil serine proteases, based on prior studies and screens. To validate the current dataset towards known substrates of proteases, its cleaved peptides were compared to those of MEROPs.
+
+MEROPs substrates (8-mers) were obtained and converted into 5-mer or 4-mer space, which were subsequently compared with the significantly cleaved peptides of cathepsin G, elastase, and hPR3.
+
+```{r}
+convert_3_to_1 <- function(three_letter_code) {
+  codes <- c(
+    Ala = "A", Arg = "R", Asn = "N", Asp = "D", Cys = "C",
+    Gln = "Q", Glu = "E", Gly = "G", His = "H", Ile = "I",
+    Leu = "L", Lys = "K", Met = "M", Phe = "F", Pro = "P",
+    Ser = "S", Thr = "T", Trp = "W", Tyr = "Y", Val = "V"
+  )
+  if(is.na(codes[three_letter_code])){
+    return("-")
+  } else{
+    return(codes[three_letter_code])
+  }
+}
+```
+
+## Splitting of MEROPs 8-mers into 5-mers/4-mers
+
+A MEROPs database list of substrates was obtained for each of the 3 neutrophil serine proteases: cathepsin G, neutrophil elastase, and human proteinase 3. Tables were derived and 5-mers/4-mers were compiled for each 8-mer substrate. Only 5-mers/4-mers with natural amino acids were included for analysis.
+
+```{r, warning = FALSE}
+meropsList <- list()
+meropsList_4mer <- list()
+combined <- append(proteases, mixtures)
+
+for(i in 1:3){
+  meropsData <- read.xlsx(paste0(combined[i], "_MEROPs.xlsx"))
+  aminoacidMerops <- meropsData[7:14]
+  colnames(aminoacidMerops) <- c("P4",  "P3",  "P2",  "P1", "P1x", "P2x", "P3x","P4x")
+  aminoacidMerops$P4 <- sapply(aminoacidMerops$P4, convert_3_to_1) 
+  aminoacidMerops$P3 <- sapply(aminoacidMerops$P3, convert_3_to_1) 
+  aminoacidMerops$P2 <- sapply(aminoacidMerops$P2, convert_3_to_1) 
+  aminoacidMerops$P1 <- sapply(aminoacidMerops$P1, convert_3_to_1) 
+  aminoacidMerops$P1x <- sapply(aminoacidMerops$P1x, convert_3_to_1)
+  aminoacidMerops$P2x <- sapply(aminoacidMerops$P2x, convert_3_to_1) 
+  aminoacidMerops$P3x <- sapply(aminoacidMerops$P3x, convert_3_to_1) 
+  aminoacidMerops$P4x <- sapply(aminoacidMerops$P4x, convert_3_to_1)
+  write.table(aminoacidMerops, file = paste0(combined[i], "_merops_list.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+  
+  short_mer <- c()
+  for(j in 1:length(aminoacidMerops[,1])){
+    row <- aminoacidMerops[j,]
+    for(k in 1:5){
+      mer <- apply(matrix(row, nrow = 4), 2, paste, collapse = "")[1]
+      row <- row[,-1]
+      if(!grepl("-", mer)){
+       short_mer <- c(short_mer, mer)
+      }
+    }
+  }
+  write.table(as.data.frame(short_mer), file = paste0(combined[i], "_merops_4mer_list.txt"), sep = "\t", row.names = FALSE, quote = FALSE, col.names = FALSE)
+   meropsList_4mer <- append(meropsList_4mer, list(short_mer))
+  names(meropsList_4mer)[length(meropsList_4mer)] <- combined[i]
+  short_mer <- c()
+  for(j in 1:length(aminoacidMerops[,1])){
+    row <- aminoacidMerops[j,]
+    for(k in 1:4){
+      mer <- apply(matrix(row, nrow = 5), 2, paste, collapse = "")[1]
+      row <- row[,-1]
+      if(!grepl("-", mer)){
+       short_mer <- c(short_mer, mer)
+      }
+    }
+  }
+  write.table(as.data.frame(short_mer), file = paste0(combined[i], "_merops_5mer_list.txt"), sep = "\t", row.names = FALSE, quote = FALSE, col.names = FALSE)
+  meropsList <- append(meropsList, list(short_mer))
+  names(meropsList)[length(meropsList)] <- combined[i]
+}
+```
+
+MEROPs substrates for each protease were visualized using ggseqlogo.
+
+```{r, out.width="40%"}
+ggseqlogo(meropsList, ncol = 5)
+ggseqlogo(meropsList_4mer, ncol = 5)
+```
+
+## Generation of 4-mer Significantly Cleaved Peptides
+
+Significantly cleaved peptides from the phage dataset were shifted into 4-mer space, for subsequent comparison to MEROPs 4-mers.
+
+```{r}
+peptide_4mers <- list()
+for(i in 1:3){
+  seqs <- peptideList[[i]]
+  temp <- c()
+  for(j in 1:length(seqs)){
+    temp <- c(temp, substr(seqs[j], 1, 4),substr(seqs[j], 2, 5))
+  }
+  peptide_4mers <- append(peptide_4mers, list(temp))
+  names(peptide_4mers)[length(peptide_4mers)] <- combined[i]
+}
+```
+
+## Venn Diagram Comparisons between 5-mers
+
+To identify similarities and differences in motifs, 5-mer peptides of MEROPs substrates were compared with phage cleaved peptides using ggVennDiagram.
+
+```{r, out.width="40%"}
+venn_list <- list(`cathepsin G MEROPs 5mer` = meropsList[[1]], `elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experiment cathepsin G` = peptideList[[1]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experiment elastase`= peptideList[[2]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experiment hPR3` = peptideList[[3]], `cathepsin G MEROPs 5mer` = meropsList[[1]],`elastase MEROPs 5mer`=meropsList[[2]], `hPR3 MEROPs 5mer`=meropsList[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+```
+
+## Venn Diagram Comparisons between 4-mers
+
+To identify similarities and differences in motifs, 4-mer peptides of MEROPs substrates were compared with phage cleaved peptides using ggVennDiagram.
+
+```{r, out.width="40%"}
+venn_list <- list(`cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experimental cathepsin G` = peptide_4mers[[1]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experimental elastase` = peptide_4mers[[2]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+
+venn_list <-  list(`experimental hPR3` = peptide_4mers[[3]], `cathepsin G MEROPs 4mer` = meropsList_4mer[[1]],`elastase MEROPs 4mer`=meropsList_4mer[[2]], `hPR3 MEROPs 4mer`=meropsList_4mer[[3]])
+ggVennDiagram(venn_list) + scale_x_continuous(expand = expansion(mult = .2))
+```
+
+# Deconvolution Analysis using MEROPs-Based Protease Reference Matrices
+
+To assess the applicability of existing MEROPs substrate data toward previous deconvolution analyses of complex biological mixtures, MEROPs 5-mer frequencies were applied as a signature protease matrix for CibersortX and EPIC. As such, instead of the phage display's protease cleaved peptides, MEROPs-derived peptides were used. Other conditions and data remained consistent.
+
+The MEROPs analysis was repeated with and without the FLAG and no protease controls generated from the phage experiments.
+
+Reference Profile 4) 3 neutrophil serine proteases from MEROPs substrates, 2 phage controls Reference Profile 5) 3 neutrophil serine proteases from MEROPs substrates
+
+## Generation of the MEROPs reference matrix
+
+```{r, warning = FALSE}
+cathepsin_G <- as.data.frame(meropsList[1])
+cathepsin_G <- table(unlist(cathepsin_G))
+cathepsin_G <- as.data.frame(cathepsin_G)
+colnames(cathepsin_G) <- c("peptide", "frequency")
+
+elastase <- as.data.frame(meropsList[2])
+elastase <- table(unlist(elastase))
+elastase <- as.data.frame(elastase)
+colnames(elastase) <- c("peptide", "frequency")
+
+hPR3 <- as.data.frame(meropsList[3])
+hPR3 <- table(unlist(hPR3))
+hPR3 <- as.data.frame(hPR3)
+colnames(hPR3) <- c("peptide", "frequency")
+
+MEROPs_df <- merge(merge(cathepsin_G, elastase, by = "peptide", all = TRUE), hPR3, by = "peptide", all = TRUE)
+phage_control_data <- protease_counts[c(10, 11, 12, 13, 14, 15)]
+phage_control_data$peptide <- rownames(phage_control_data)
+phage_control_data <- phage_control_data[, c(ncol(phage_control_data), 1:(ncol(phage_control_data)-1))]
+MEROPs_and_control <- merge(MEROPs_df, phage_control_data, by = "peptide", all = TRUE)
+MEROPs_df[is.na(MEROPs_df)] <- 0
+MEROPs_and_control[is.na(MEROPs_and_control)] <- 0
+```
+
+## Normalization and Processing for Deconvolution Input
+
+The following describes results from the previous analyses, with and without the phage controls.
+
+Normalized counts data was generated for CibersortX and EPIC input, scaled up by 2000. Data for EPIC was rounded to 4 decimal places for processing. Common peptides between the supernatant and MEROPs reference matrix were selected as signature peptides.
+
+```{r, warning = FALSE, eval = FALSE}
+#Reference Profile 5
+MEROPs_df$peptide <- as.character(MEROPs_df$peptide)
+MEROPs_df <- MEROPs_df[order(MEROPs_df$peptide), ]
+normalized_data <- scale(MEROPs_df[,-1], center = FALSE, scale = colSums(MEROPs_df[, -1]))
+normalized_data <- as.data.frame(normalized_data)*2000
+normalized_df <- cbind(MEROPs_df[, 1, drop = FALSE], as.data.frame(normalized_data))
+repeated_df <- cbind(normalized_df, normalized_df[, 2], normalized_df[, 3], normalized_df[, 4], normalized_df[, 2], normalized_df[, 3], normalized_df[, 4])
+colnames(repeated_df) <- c("peptide", "cathepsin_G", "elastase", "hPR3", "cathepsin_G", "elastase", "hPR3", "cathepsin_G", "elastase", "hPR3")
+write.table(repeated_df, file = paste0("protease_ref_MEROPs.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+
+MEROPs_common_peptides <- intersect(repeated_df$peptide, rownames(mixture_matrix_filtered))
+write.table(MEROPs_common_peptides, file="MEROPs_signature_peptides.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
+
+#Reference Profile 4
+MEROPs_and_control$peptide <- as.character(MEROPs_and_control$peptide)
+MEROPs_and_control <- MEROPs_and_control[order(MEROPs_and_control$peptide), ]
+normalized_data <- scale(MEROPs_and_control[,-1], center = FALSE, scale = colSums(MEROPs_and_control[, -1]))
+normalized_data <- as.data.frame(normalized_data)*2000
+normalized_df <- cbind(MEROPs_and_control[, 1, drop = FALSE], as.data.frame(normalized_data))
+repeated_df <- cbind(normalized_df, normalized_df[, 2], normalized_df[, 3], normalized_df[, 4], normalized_df[, 2], normalized_df[, 3], normalized_df[, 4])
+colnames(repeated_df) <- c("peptide", "cathepsin_G", "elastase", "hPR3", "no_protease", "no_protease", "no_protease", "FLAG_peptide", "FLAG_peptide", "FLAG_peptide", "cathepsin_G", "elastase", "hPR3", "cathepsin_G", "elastase", "hPR3")
+write.table(repeated_df, file = paste0("protease_ref_MEROPs_control.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+
+round_df <- function(x, digits) {
+    numeric_columns <- sapply(x, mode) == 'numeric'
+    x[numeric_columns] <-  round(x[numeric_columns], digits)
+    x}
+shrunk_df <- round_df(repeated_df, 4)
+write.table(shrunk_df, file = paste0("shrunk_protease_ref_MEROPs_control.txt"), sep = "\t", row.names = FALSE, quote = FALSE)
+
+MEROPs_common_peptides_control <- intersect(shrunk_df$peptide, rownames(mixture_matrix_filtered))
+write.table(MEROPs_common_peptides_control, file="MEROPs_signature_peptides_control.txt", row.names = FALSE, col.names = FALSE, quote = FALSE)
+```
+
+## Deconvolution of Mixtures with MEROPs-based protease references and phage controls (profile 4)
+
+```{r, echo = FALSE}
+cibersort_merops_percentage <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = rep(0, 15), elastase = rep(0, 15), hPR3 = rep(0, 15),
+  no_protease = c(67.58911975, 66.08662677, 67.54593287, 46.39214951, 46.78114518, 48.9650232, 67.31329629, 70.62977981, 68.36881702, 52.64583639, 47.76945576, 45.77131656, 24.09915088, 24.8918719, 25.46028761), 
+FLAG_peptide = c(32.41088025, 33.91337323, 32.45406713, 53.60785049, 53.21885482, 51.0349768, 32.68670371, 29.37022019, 31.63118298, 47.35416361, 52.23054424, 54.22868344, 75.90084912, 75.1081281, 74.53971239))
+
+cibersort_merops_absolute <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = rep(0, 15), elastase = rep(0, 15), hPR3 = rep(0, 15),
+  no_protease = c(1.241256162, 1.210965482, 1.233343418, 0.749704632, 0.749985555, 0.789652102, 1.237576057, 1.321810202, 1.249408752, 0.796558779, 0.773733342, 0.708815877, 0.372773388, 0.381892848, 0.393758491),
+  FLAG_peptide = c(0.595217174, 0.62142564, 0.592589493, 0.866311526, 0.853193573, 0.823033956, 0.600955296, 0.549652806, 0.578045352, 0.716493028, 0.845990663, 0.839786895, 1.174058656, 1.152314181, 1.152800986))
+
+epic_merops_percentage <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0100, 0.0000, 0.0200, 0.0200, 0.0100, 0.0100),
+  elastase = c(0.0200, 0.0000, 0.0200, 0.0100, 0.0000, 0.0200, 0.0000, 0.0100, 0.0100, 0.0200, 0.0200, 0.0200, 0.0900, 0.0000, 0.0800),
+  hPR3 = c(0.0000, 0.0000, 0.0000, 0.0000, 0.0100, 0.0100, 0.0000, 0.0000, 0.0000, 0.0200, 0.0100, 0.0200, 0.0600, 0.0000, 0.0200),
+  no_protease = c(88.9200, 99.4200, 99.0700, 75.8300, 80.5900, 86.4900, 90.4500, 98.2100, 99.9400, 92.7000, 76.4600, 80.8500, 0.8300, 0.6900, 1.3500),
+  FLAG_peptide = c(11.0600, 0.5500, 0.5500, 22.5400, 18.0200, 11.8900, 9.5400, 1.7900, 0.0400, 5.9000, 22.3300, 17.7000, 94.9000, 95.1200, 94.5600),
+  other = c(0.0000, 0.0200, 0.3500, 1.5900, 1.3700, 1.5900, 0.0000, 0.0000, 0.0000, 1.3600, 1.1900, 1.3900, 4.0900, 4.1700, 3.9900))
+```
+
+### Deconvolution Results from CibersortX
+
+Protease Signature Matrix Parameters:
+
+Default (kappa = 999, q-value = 0.01, sampling = 0.5, min expression = 1)
+
+Quantile Normalization enabled
+
+Min-Max Barcode Peptides per Condition: adjusted for experiment complexity (500-1000 for all proteases with controls and all proteases without controls)
+
+Total Peptides included in Signature Matrix: 1041 (all proteases with controls), 82 (all proteases without controls)
+
+Deconvolution Fraction Parameters:
+ 
+Default (quantile normalization disabled, permutations = 1) with batch correction
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="CibersortX MEROPs results with phage control",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("cibermerops_controlref.png", "cibermerops_control.png","cibermerops_control2.png"))
+```
+
+Generated barplots and heatmaps from results
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- cibersort_merops_percentage %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+absolute_data <- cibersort_merops_absolute %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+barplot_data <- reshape2::melt(absolute_data, id.vars = "Condition")
+rownames(absolute_data) <- absolute_data[, 1]
+pheatmap(absolute_data[,-1], display_numbers = TRUE)
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- cibersort_merops_absolute %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "Absolute_Score")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "absolute scores", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+
+### Deconvolution Results from EPIC
+
+EPIC signature peptides: 207119 (all proteases with controls), 283 (all proteases without controls)
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="EPIC MEROPs results with phage control",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("epicmerops_control1.png","epicmerops_control2.png", "epicmerops_control3.png"))
+```
+
+Generated barplots and heatmaps from results
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- epic_merops_percentage %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- epic_merops_percentage %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "percentage")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide", "other")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = percentage, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "relative percentages", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+## Deconvolution of Mixtures with MEROPs-based protease references and no phage controls (profile 5)
+
+```{r, echo = FALSE}
+cibersort_merops_percentage_nocontrol <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(95.40057612, 86.77531156, 91.12557759, 100, 97.13401462, 96.01165458, 92.95197976, 96.56740299, 94.56660259, 99.75967056, 99.71931235, 99.46510115, 97.48599348, 96.62277679, 95.58763157), 
+  elastase = c(0, 0, 0, 0, 0, 0.035372771, 0, 0, 0, 0.240329438, 0.280687652, 0, 0, 0, 0), 
+  hPR3 = c(4.599423879, 13.22468844, 8.874422414, 0, 2.86598538, 3.95297265, 7.048020244, 3.43259701, 5.433397405, 0, 0, 0.534898847, 2.514006519, 3.37722321, 4.41236843))
+
+cibersort_merops_absolute_nocontrol <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(4.969156341, 4.584703749, 4.581289228, 4.838863186, 4.655362134, 4.665766596, 4.727604774, 4.860460244, 4.782477065, 4.701597146, 4.982285167, 4.440130938, 4.986156571, 4.831338662, 4.843864027), 
+  elastase = c(0, 0, 0, 0, 0, 0.001718969, 0, 0, 0, 0.011326543, 0.014024023, 0, 0, 0, 0), 
+  hPR3 = c(0.239571471, 0.69871577, 0.446156797, 0, 0.137358678, 0.19209801, 0.358467396, 0.172770529, 0.274780924, 0, 0, 0.023877932, 0.128584935, 0.168868145, 0.223594961))
+
+epic_merops_percentage_nocontrol <- data.frame(
+  Condition = rep(c("no inhibitor", "AEBSF", "EDTA", "AEBSF+EDTA", "FLAG control"), each = 3),
+  cathepsin_G = c(19.0600, 20.3600, 11.9200, 57.3600, 38.5300, 35.9100, 21.0700, 28.4200, 34.1400, 53.6100, 7.7200, 4.6400, 33.5100, 38.5400, 34.8600),
+  elastase = c(32.7500, 29.5800, 44.0700, 5.5000, 35.3100, 14.3000, 2.6800, 11.0200, 17.0900, 6.6200, 66.8000, 6.8200, 28.2800, 14.9400, 25.240),
+  hPR3 = c(18.5200, 20.1200, 13.0100, 17.9300, 5.6800, 30.8800, 44.8000, 28.2900, 18.9700, 13.9200, 7.6800, 65.2000, 19.7800, 26.6500, 21.010),
+  other = c(29.6700, 29.9300, 31.0000, 19.2100, 20.4900, 18.9100, 31.4400, 32.2600, 29.7900, 25.8400, 17.7900, 23.3500, 18.4300, 19.8600, 18.890))
+```
+
+### Deconvolution Results from CibersortX
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="CibersortX MEROPs results without phage control",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("cibermerops_nocontrolref.png", "cibermerops_nocontrol.png","cibermerops_nocontrol2.png"))
+```
+
+Generated barplots and heatmaps from results
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- cibersort_merops_percentage_nocontrol %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+absolute_data <- cibersort_merops_absolute_nocontrol %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+barplot_data <- reshape2::melt(absolute_data, id.vars = "Condition")
+rownames(absolute_data) <- absolute_data[, 1]
+pheatmap(absolute_data[,-1], display_numbers = TRUE)
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "absolute scores", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- cibersort_merops_absolute_nocontrol %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "Absolute_Score")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "no_protease", "FLAG_peptide")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = Absolute_Score, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "absolute scores", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
+
+
+### Deconvolution Results from EPIC
+
+```{r, echo=FALSE,out.width="30%", out.height="20%",fig.cap="EPIC MEROPs results without phage control",fig.show='hold',fig.align='center'}
+knitr::include_graphics(c("epicmerops_nocontrol1.png","epicmerops_nocontrol2.png", "epicmerops_nocontrol3.png"))
+```
+
+Generated barplots and heatmaps from results
+
+```{r, echo = FALSE, warning = FALSE, out.width="30%"}
+percentage_data <- epic_merops_percentage_nocontrol %>%
+  mutate(Condition = paste0(Condition, " ", (row_number()-1)%%3 + 1))
+rownames(percentage_data) <- percentage_data[, 1]
+heatmap_data <- percentage_data[, -1]
+pheatmap(heatmap_data, display_numbers = TRUE)
+
+barplot_data <- reshape2::melt(percentage_data, id.vars = "Condition")
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = value, fill = variable)) + geom_bar(stat = "identity") + labs(x = "supernatant condition", y = "relative percentages", fill = "protease") + scale_fill_viridis_d()+ theme_minimal() + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+barplot_data <- epic_merops_percentage_nocontrol %>%
+  pivot_longer(-Condition, names_to = "protease", values_to = "percentage")
+barplot_data <- barplot_data %>% 
+mutate(protease = factor(protease, levels = c("cathepsin_G", "elastase", "hPR3", "other")))
+ggplot(barplot_data, aes(x = fct_inorder(Condition), y = percentage, fill = protease)) +
+  geom_bar(stat = "summary", fun = "mean", position = position_dodge(width = 0.9)) +
+  geom_errorbar(stat = "summary", fun.data = "mean_se", width = 0.2, position = position_dodge(width = 0.9)) +
+  theme_minimal() +
+  labs(x = "supernatant condition", y = "relative percentages", fill = "protease") +
+  scale_fill_viridis_d() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  geom_beeswarm(data = barplot_data, aes(color = protease), size = 2, alpha = 0.5, position = position_dodge(width = 0.9))
+```
