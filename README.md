@@ -1,6 +1,6 @@
 # Protease Profiling: High Throughput Sequencing Analysis Pipeline
 
-This folder contained files for data analysis and figure generation of the Deep Protease Profiling manuscript. It identified significantly enriched peptides, analyzed amino/nucleic acid frequencies, assessed substrate motifs, and deconvoluted protease composition within mixtures. The Python pipeline only included processing from raw fastq files (trimming, filtering, translation) into a merged counts file, with frequency/counts analysis. Subsequent analysis in the manuscript was conducted in R. 
+This folder contained files for data analysis and figure generation of the Deep Protease Profiling manuscript. It identified significantly enriched peptides, analyzed amino/nucleic acid frequencies, assessed substrate motifs, and deconvoluted protease composition within mixtures. The Python pipeline only included processing from raw fastq files (trimming, filtering, translation) into a merged counts file, with frequency/counts analysis. Subsequent analysis in the manuscript was conducted in R. The full RMarkdown file is available at https://rpubs.com/yue23/protease_analysis
 
 Please specify experiment details/names in parameter.txt, which would include all settings. This pipeline analyzes one-end reads, which could be single or in parallel. 
 
